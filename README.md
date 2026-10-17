@@ -54,13 +54,14 @@ The entire UI is crafted to match the authentic, warm-neutral "stone & cream" ae
 ### Official Showcase & Live Demo
 Visit the official web page: **[https://rajviyash9136freefr-tech.github.io/OpenWisprFlow/](https://rajviyash9136freefr-tech.github.io/OpenWisprFlow/)**
 
-### Official Setup Installers (v1.0.6)
-| Platform | Package | Release Download Page |
+### Downloads by Platform (v1.0.6)
+| Operating System | Package | Release Download Page |
 | :--- | :--- | :--- |
-| **Windows 11** | Custom Setup Installer (.exe) | [Open.Wispr.Setup.1.0.6.Windows.11.exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6) |
-| **Windows 10** | Custom Setup Installer (.exe) | [Open.Wispr.Setup.1.0.6.Windows.10.exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6) |
+| **Windows (11 & 10)** | Unified Setup Installer (.exe) | [Open.Wispr.Setup.1.0.6.Windows.exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6) |
+| **macOS** | Universal App Bundle (.zip) | [Open-Wispr-1.0.6-Mac.zip](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6) |
+| **Linux** | Complete x86-64 Bundle (.tar.gz) | [Open-Wispr-1.0.6-Linux.tar.gz](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6) |
 
-*Full Release Details & Assets: [GitHub Release v1.0.6](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6)*
+*Full Release Details & Checksums: [GitHub Release v1.0.6](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6)*
 
 ### 1. Prerequisites
 - **Node.js**: v18.0.0 or higher
