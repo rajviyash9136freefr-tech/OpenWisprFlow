@@ -11,7 +11,7 @@
 
 ## Overview
 
-**Open Wispr** is an independent, clean-room open-source desktop application that provides universal voice dictation into any desktop application. Hold your global hotkey (`Caps Lock` or `Single Ctrl`), speak into your microphone, and your words are instantly transcribed and pasted directly into your active text field.
+**Open Wispr** is an independent, clean-room open-source desktop application that provides universal voice dictation into any desktop application. Hold your global hotkey (`Caps Lock` by default, or configurable `Ctrl` in settings), speak into your microphone, and your words are instantly transcribed and pasted directly into your active text field.
 
 The entire UI is crafted to match the authentic, warm-neutral "stone & cream" aesthetic (`#F8F8F6`, `#F2F1ED`, `#1A1917`, EB Garamond serif titles, Figtree typography).
 
@@ -32,7 +32,7 @@ The entire UI is crafted to match the authentic, warm-neutral "stone & cream" ae
 1. **Floating Flow Bar ("The Pill")**:
    - Transparent, frameless, draggable window (`alwaysOnTop: true`).
    - Dynamic 16-band RMS audio spectrum: resting breathing dots in silence, animated amber-gold wavebars when speaking.
-   - Smooth state transitions: `Idle` ➔ `Recording` ➔ `Transcribing` ➔ `Pasted`.
+   - Smooth state transitions: `Idle` -> `Recording` -> `Transcribing` -> `Pasted`.
 2. **Main Hub Dashboard**:
    - **Timeline**: Past dictations grouped by TODAY and YESTERDAY, searchable, with one-click copy and bookmarking.
    - **Metrics & Voice Profile**: Words spoken, words per minute (WPM), streak days.
@@ -51,16 +51,16 @@ The entire UI is crafted to match the authentic, warm-neutral "stone & cream" ae
 
 ## Quick Start
 
-### 🌐 Live Showcase & Web Demo
+### Official Showcase & Live Demo
 Visit the official web page: **[https://rajviyash9136freefr-tech.github.io/OpenWisprFlow/](https://rajviyash9136freefr-tech.github.io/OpenWisprFlow/)**
 
-### 📦 Download Prebuilt Binaries (v1.0.6)
-| Platform | Installer | Portable / Archive |
+### Official Setup Installers (v1.0.6)
+| Platform | Package | Release Download Page |
 | :--- | :--- | :--- |
-| **Windows 11** | [Setup 1.0.6 (Windows 11).exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/download/v1.0.6/Open.Wispr.Setup.1.0.6.Windows.11.exe) | [Portable 1.0.6 (Windows 11).exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/download/v1.0.6/Open.Wispr.1.0.6.Windows.11.exe) |
-| **Windows 10** | [Setup 1.0.6 (Windows 10).exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/download/v1.0.6/Open.Wispr.Setup.1.0.6.Windows.10.exe) | [Portable 1.0.6 (Windows 10).exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/download/v1.0.6/Open.Wispr.1.0.6.Windows.10.exe) |
-| **macOS (Apple Silicon & Intel)** | — | [Open-Wispr-1.0.6-Mac.zip](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/download/v1.0.6/Open-Wispr-1.0.6-Mac.zip) |
-| **Linux (Ubuntu, Debian, Fedora, Arch)** | — | [Open-Wispr-1.0.6-Linux.tar.gz](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/download/v1.0.6/Open-Wispr-1.0.6-Linux.tar.gz) |
+| **Windows 11** | Custom Setup Installer (.exe) | [Open.Wispr.Setup.1.0.6.Windows.11.exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6) |
+| **Windows 10** | Custom Setup Installer (.exe) | [Open.Wispr.Setup.1.0.6.Windows.10.exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6) |
+
+*Full Release Details & Assets: [GitHub Release v1.0.6](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6)*
 
 ### 1. Prerequisites
 - **Node.js**: v18.0.0 or higher

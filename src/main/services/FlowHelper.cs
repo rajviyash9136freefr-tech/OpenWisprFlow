@@ -141,7 +141,7 @@ class FlowHelper {
             bool isDown = (wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_SYSKEYDOWN);
             bool isUp = (wParam == (IntPtr)WM_KEYUP || wParam == (IntPtr)WM_SYSKEYUP);
 
-            // MODE 1: Caps Lock & Dual Ctrl Support
+            // MODE 1: Caps Lock Only (Strictly Caps Lock, single Control does not trigger)
             if (_configuredMode == "Caps Lock") {
                 if (vkCode == VK_CAPITAL) {
                     if (isDown) {
@@ -161,27 +161,6 @@ class FlowHelper {
                             Console.Out.Flush();
                         }
                         return (IntPtr)1; // Suppress Caps release
-                    }
-                } else if (vkCode == VK_CONTROL || vkCode == VK_LCONTROL || vkCode == VK_RCONTROL) {
-                    if (isDown) {
-                        if (!_ctrlOnlyCandidate && !_isPressed) {
-                            _ctrlOnlyCandidate = true;
-                            _ctrlOtherKeyPressed = false;
-                            _ctrlDownTick = Stopwatch.GetTimestamp();
-                            IntPtr fg = GetForegroundWindow();
-                            if (fg != IntPtr.Zero) _targetHwnd = fg;
-                        }
-                    } else if (isUp) {
-                        _ctrlOnlyCandidate = false;
-                        if (_isPressed) {
-                            _isPressed = false;
-                            Console.WriteLine("HOTKEY_UP");
-                            Console.Out.Flush();
-                        }
-                    }
-                } else {
-                    if (isDown && _ctrlOnlyCandidate) {
-                        _ctrlOtherKeyPressed = true;
                     }
                 }
                 return CallNextHookEx(_hookID, nCode, wParam, lParam);
@@ -282,8 +261,8 @@ class FlowHelper {
         while (true) {
             Thread.Sleep(20);
 
-            // Single Ctrl hold timer check (> 180ms without any other key)
-            if ((_configuredMode == "Ctrl" || _configuredMode == "Caps Lock") && _ctrlOnlyCandidate && !_ctrlOtherKeyPressed && !_isPressed) {
+            // Single Ctrl hold timer check (> 180ms without any other key) - ONLY active when mode is Ctrl
+            if (_configuredMode == "Ctrl" && _ctrlOnlyCandidate && !_ctrlOtherKeyPressed && !_isPressed) {
                 long elapsedMs = (Stopwatch.GetTimestamp() - _ctrlDownTick) * 1000 / Stopwatch.Frequency;
                 if (elapsedMs >= 180) {
                     bool ctrlDown = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0 ||
