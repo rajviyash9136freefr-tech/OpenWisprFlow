@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-transparent text-[#1A1917] dark:text-[#F2F1ED] font-sans antialiased overflow-hidden select-none;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Figtree', Roboto, 'Inter', sans-serif;
+  }
+
+  .font-serif-title {
+    font-family: 'EB Garamond', Garamond, 'Newsreader', Georgia, serif;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.22);
+}

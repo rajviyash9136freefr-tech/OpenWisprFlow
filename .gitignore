@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build and distribution
+dist/
+dist-electron/
+release/
+build/
+
+# Local storage and state
+openwispr-data/
+*.log
+
+# Environment variables & API tokens (NEVER commit secrets)
+.env
+.env.local
+.env.production
+
+# Private analysis folder & media (NEVER part of this repo)
+wispr-clone-workspace/
+temp_video_frames/
+video_analysis/
+*.wav
+*.mp4
+# Scratch and test files
+test_*.js
+check_*.js
+inspect_*.js
+diagnose_*.js
+scan_*.js
+find_*.js
+transcribe_video.py
+*.pyc
+__pycache__/
+
