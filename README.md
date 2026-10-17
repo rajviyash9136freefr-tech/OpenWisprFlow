@@ -57,8 +57,8 @@ Visit the official web page: **[https://rajviyash9136freefr-tech.github.io/OpenW
 ### 📦 Download Prebuilt Binaries (v1.0.6)
 | Platform | Installer | Portable / Archive |
 | :--- | :--- | :--- |
-| **Windows 11** | [Setup 1.0.6 (Windows 11).exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/download/v1.0.6/Open.Wispr.Setup.1.0.6.(Windows.11).exe) | [Portable 1.0.6 (Windows 11).exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/download/v1.0.6/Open.Wispr.1.0.6.(Windows.11).exe) |
-| **Windows 10** | [Setup 1.0.6 (Windows 10).exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/download/v1.0.6/Open.Wispr.Setup.1.0.6.(Windows.10).exe) | [Portable 1.0.6 (Windows 10).exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/download/v1.0.6/Open.Wispr.1.0.6.(Windows.10).exe) |
+| **Windows 11** | [Setup 1.0.6 (Windows 11).exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/download/v1.0.6/Open.Wispr.Setup.1.0.6.Windows.11.exe) | [Portable 1.0.6 (Windows 11).exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/download/v1.0.6/Open.Wispr.1.0.6.Windows.11.exe) |
+| **Windows 10** | [Setup 1.0.6 (Windows 10).exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/download/v1.0.6/Open.Wispr.Setup.1.0.6.Windows.10.exe) | [Portable 1.0.6 (Windows 10).exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/download/v1.0.6/Open.Wispr.1.0.6.Windows.10.exe) |
 | **macOS (Apple Silicon & Intel)** | — | [Open-Wispr-1.0.6-Mac.zip](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/download/v1.0.6/Open-Wispr-1.0.6-Mac.zip) |
 | **Linux (Ubuntu, Debian, Fedora, Arch)** | — | [Open-Wispr-1.0.6-Linux.tar.gz](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/download/v1.0.6/Open-Wispr-1.0.6-Linux.tar.gz) |
 
