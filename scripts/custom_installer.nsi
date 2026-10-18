@@ -16,13 +16,13 @@ RequestExecutionLevel user
 SetCompressor /SOLID lzma
 
 ; Version Info
-VIProductVersion "1.0.6.0"
+VIProductVersion "1.0.7.0"
 VIAddVersionKey "ProductName" "Open Wispr"
 VIAddVersionKey "CompanyName" "Open Wispr Community"
 VIAddVersionKey "LegalCopyright" "Copyright (C) 2026 Open Wispr Community. MIT License."
 VIAddVersionKey "FileDescription" "Open Wispr Setup Installer"
-VIAddVersionKey "FileVersion" "1.0.6.0"
-VIAddVersionKey "ProductVersion" "1.0.6.0"
+VIAddVersionKey "FileVersion" "1.0.7.0"
+VIAddVersionKey "ProductVersion" "1.0.7.0"
 
 ; UI Customization
 !define MUI_ICON "..\assets\icon.ico"
@@ -78,8 +78,8 @@ Section "Open Wispr Application" SecMain
     CreateShortcut "$DESKTOP\Open Wispr.lnk" "$INSTDIR\Open Wispr.exe" "" "$INSTDIR\Open Wispr.exe" 0
 
     ; Windows Add/Remove Programs Registry Entries
-    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Open Wispr" "DisplayName" "Open Wispr 1.0.6"
-    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Open Wispr" "DisplayVersion" "1.0.6"
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Open Wispr" "DisplayName" "Open Wispr 1.0.7"
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Open Wispr" "DisplayVersion" "1.0.7"
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Open Wispr" "Publisher" "Open Wispr Community"
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Open Wispr" "DisplayIcon" "$INSTDIR\Open Wispr.exe,0"
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Open Wispr" "UninstallString" '"$INSTDIR\Uninstall Open Wispr.exe"'

@@ -240,8 +240,8 @@ export class AudioProcessor {
       energy /= frameSize;
       totalEnergy += energy;
 
-      // Speech frame criteria: energetic and non-trivially harmonic
-      if (energy > 0.0006 && zeroCrossings < frameSize * 0.45) {
+      // Adaptive speech frame criteria: sensitive down to 0.00012 (-39 dBFS) to capture quiet voices and low-gain mics
+      if (energy > 0.00012 && zeroCrossings < frameSize * 0.45) {
         isSpeechFrame[f] = true;
       }
     }
@@ -254,8 +254,13 @@ export class AudioProcessor {
     const speechRatio = speechCount / numFrames;
 
     if (speechCount === 0) {
-      // No active speech detected (pure background noise/silence)
-      return { audio: new Float32Array(0), hasSpeech: false, speechRatio: 0 };
+      // If quiet or low-gain mic, do NOT discard audio! Fallback to full audio so Whisper can transcribe it
+      const hasMinDuration = samples.length >= sampleRate * 0.3;
+      return {
+        audio: samples,
+        hasSpeech: hasMinDuration,
+        speechRatio: hasMinDuration ? 0.5 : 0,
+      };
     }
 
     // Find first and last speech frames

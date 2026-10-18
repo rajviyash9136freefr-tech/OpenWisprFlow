@@ -54,14 +54,21 @@ The entire UI is crafted to match the authentic, warm-neutral "stone & cream" ae
 ### Official Showcase & Live Demo
 Visit the official web page: **[https://rajviyash9136freefr-tech.github.io/OpenWisprFlow/](https://rajviyash9136freefr-tech.github.io/OpenWisprFlow/)**
 
-### Downloads by Platform (v1.0.6)
+### Downloads by Platform (v1.0.7)
 | Operating System | Package | Release Download Page |
 | :--- | :--- | :--- |
-| **Windows (11 & 10)** | Unified Setup Installer (.exe) | [Open.Wispr.Setup.1.0.6.Windows.exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6) |
-| **macOS** | Universal App Bundle (.zip) | [Open-Wispr-1.0.6-Mac.zip](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6) |
-| **Linux** | Complete x86-64 Bundle (.tar.gz) | [Open-Wispr-1.0.6-Linux.tar.gz](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6) |
+| **Windows (11 & 10)** | Unified Setup Installer (.exe) | [Open.Wispr.Setup.1.0.7.Windows.exe](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.7) |
+| **macOS** | Universal App Bundle (.zip) | [Open-Wispr-1.0.7-Mac.zip](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.7) |
+| **Linux** | Complete x86-64 Bundle (.tar.gz) | [Open-Wispr-1.0.7-Linux.tar.gz](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.7) |
 
-*Full Release Details & Checksums: [GitHub Release v1.0.6](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6)*
+*Full Release Details & Checksums: [GitHub Release v1.0.7](https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.7)*
+
+### Cross-PC Compatibility Fixes (v1.0.7)
+- **Universal Microphone Compatibility**: Eliminated hardware `sampleRate: 48000` constraints in `getUserMedia` that triggered `OverconstrainedError` on external USB headsets, Bluetooth mics, and 44.1kHz laptop sound cards.
+- **Adaptive VAD Sensitivity**: Lowered voice activity threshold from 0.0006 to 0.00012 (-39 dBFS) and disabled silent-dropping so low-gain microphones and whisper dictations are preserved without "Speech too short" errors.
+- **Helper Watchdog & Auto-Recovery**: Native C# hook helper now features exponential auto-restart watchdog on process interruption or Windows screen lock.
+- **Ultra-Fast Direct Paste**: Added zero-latency VBScript direct paste fallback (<30ms) replacing high-overhead PowerShell spawning.
+- **Global Shortcut Fallback**: Registered universal `F8` and `Ctrl+Space` fallback keys for environments where low-level Windows hooks are restricted by security policies.
 
 ### 1. Prerequisites
 - **Node.js**: v18.0.0 or higher

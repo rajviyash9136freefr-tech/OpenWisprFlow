@@ -167,6 +167,9 @@ class OpenWisprApp {
     const prefs = this.storage.getPreferences();
 
     try {
+      globalShortcut.register('F8', () => {
+        this.toggleDictation();
+      });
       globalShortcut.register('CommandOrControl+Shift+Space', () => {
         this.toggleDictation();
       });
@@ -276,10 +279,12 @@ class OpenWisprApp {
             this.windowManager.hideOverlay();
           }, 1100);
         } else {
-          this.windowManager.broadcast('overlay:error-message', 'No speech detected');
+          const hasToken = Boolean(prefs.hfToken || prefs.groqApiKey || prefs.openaiApiKey || process.env.HF_TOKEN);
+          const feedbackMsg = hasToken ? 'No speech detected' : 'Set free token in Settings';
+          this.windowManager.broadcast('overlay:error-message', feedbackMsg);
           setTimeout(() => {
             this.windowManager.hideOverlay();
-          }, 1500);
+          }, 2000);
         }
 
         return transcript;

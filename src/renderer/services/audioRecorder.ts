@@ -43,13 +43,17 @@ export class AudioRecorder {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
-          sampleRate: 48000,
         },
       });
 
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      this.audioContext = new AudioCtx({ sampleRate: 48000 });
-      this.actualSampleRate = this.audioContext.sampleRate || 48000;
+      // Allow the system's native hardware sample rate (44.1k, 48k, etc.) to prevent NotSupportedError
+      try {
+        this.audioContext = new AudioCtx();
+      } catch (e) {
+        this.audioContext = new AudioCtx({ sampleRate: 44100 });
+      }
+      this.actualSampleRate = this.audioContext.sampleRate || 44100;
 
       this.input = this.audioContext.createMediaStreamSource(this.stream);
 

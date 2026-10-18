@@ -11,6 +11,10 @@ export class NativeHelperService {
   private isAvailable = false;
   private currentHotkey = 'Caps Lock';
 
+  private isDestroyed = false;
+  private restartTimeout: NodeJS.Timeout | null = null;
+  private restartCount = 0;
+
   constructor(
     callbacks: { onHotkeyDown: () => void; onHotkeyUp: () => void },
     initialHotkey = 'Caps Lock'
@@ -38,7 +42,22 @@ export class NativeHelperService {
     return null;
   }
 
+  private scheduleRestart() {
+    if (this.isDestroyed) return;
+    if (this.restartCount >= 10) {
+      console.warn('[NativeHelper] Max restart attempts reached.');
+      return;
+    }
+    const delay = Math.min(1000 * Math.pow(1.5, this.restartCount), 10000);
+    this.restartCount++;
+    console.log(`[NativeHelper] Scheduling FlowHelper auto-restart in ${Math.round(delay)}ms (attempt ${this.restartCount})...`);
+    this.restartTimeout = setTimeout(() => {
+      this.startHelper();
+    }, delay);
+  }
+
   private startHelper() {
+    if (this.isDestroyed) return;
     const exePath = this.resolveHelperPath();
     if (!exePath) {
       console.warn('[NativeHelper] FlowHelper.exe binary not found. Falling back to standard shortcuts.');
@@ -57,6 +76,7 @@ export class NativeHelperService {
         console.warn('[NativeHelper] Process error handled:', err.message);
         this.isAvailable = false;
         this.process = null;
+        this.scheduleRestart();
       });
 
       let buffer = '';
@@ -82,6 +102,7 @@ export class NativeHelperService {
             }
           } else if (trimmed === 'HELPER_READY') {
             this.isAvailable = true;
+            this.restartCount = 0; // Reset restart counter on successful startup
             console.log(`[NativeHelper] Global keyboard hook active & configured for '${this.currentHotkey}'.`);
             this.setHotkey(this.currentHotkey);
           } else if (trimmed.startsWith('HOTKEY_CONFIGURED:')) {
@@ -98,11 +119,15 @@ export class NativeHelperService {
         console.log(`[NativeHelper] Helper closed with code ${code}.`);
         this.isAvailable = false;
         this.process = null;
+        if (!this.isDestroyed) {
+          this.scheduleRestart();
+        }
       });
     } catch (err: any) {
       console.warn('[NativeHelper] Spawn error handled:', err.message);
       this.isAvailable = false;
       this.process = null;
+      this.scheduleRestart();
     }
   }
 
@@ -156,18 +181,31 @@ export class NativeHelperService {
       return;
     }
 
+    // Windows Fast Direct Paste via VBScript SendKeys (< 30ms latency, zero PowerShell startup delay)
     try {
-      const ps = spawn('powershell.exe', [
-        '-NoProfile',
-        '-NonInteractive',
-        '-Command',
-        'Start-Sleep -Milliseconds 60; Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait("^v")',
-      ], { windowsHide: true });
-      ps.on('error', () => {});
+      const vbsCode = 'Set WshShell = CreateObject("WScript.Shell")\nWScript.Sleep 50\nWshShell.SendKeys "^v"';
+      const tempVbs = path.join(app.getPath('temp'), 'openwispr_paste.vbs');
+      fs.writeFileSync(tempVbs, vbsCode);
+      const cscript = spawn('cscript.exe', ['//nologo', tempVbs], { windowsHide: true });
+      cscript.on('error', () => {
+        // Fallback to powershell if cscript is blocked
+        const ps = spawn('powershell.exe', [
+          '-NoProfile',
+          '-NonInteractive',
+          '-Command',
+          'Start-Sleep -Milliseconds 60; Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait("^v")',
+        ], { windowsHide: true });
+        ps.on('error', () => {});
+      });
     } catch (e) {}
   }
 
   public destroy() {
+    this.isDestroyed = true;
+    if (this.restartTimeout) {
+      clearTimeout(this.restartTimeout);
+      this.restartTimeout = null;
+    }
     if (this.process) {
       try {
         this.process.stdin?.write('EXIT\n');

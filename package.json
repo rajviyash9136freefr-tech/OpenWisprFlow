@@ -1,6 +1,6 @@
 {
   "name": "open-wispr",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Open-Source AI Speech-to-Text Desktop App with low-level global hotkey, seamless text insertion, and free Hugging Face Whisper inference.",
   "main": "dist-electron/main/index.js",
   "author": "Open Wispr Community",
