@@ -9,7 +9,7 @@ export const BRANDING = {
   productName: 'Open Wispr',
   companyName: 'Open Wispr Community',
   author: 'Clean Room Open Source Project',
-  version: '1.0.6',
+  version: '2.0.0',
   description: 'Open Wispr — Free, Private & Open-Source AI Voice Dictation with Zero Login',
 
   // Window Titles
@@ -24,7 +24,7 @@ export const BRANDING = {
 
   // UI Tags and Badges
   brandBadge: 'Open',
-  versionString: 'Open Wispr v1.0.6',
+  versionString: 'Open Wispr v2.0.0',
   tagline: 'Universal voice-typing for any app',
 
   // Storage and Path Keys

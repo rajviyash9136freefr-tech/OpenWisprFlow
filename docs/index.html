@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Open Wispr — Free, Private & Low-Latency AI Voice Dictation</title>
-  <meta name="description" content="Open Wispr is a free, open-source AI speech-to-text desktop companion with low-level push-to-talk, seamless instant text insertion, and multi-language support (Hindi, English, Hinglish). Available for Windows 11 and Windows 10." />
+  <title>Open Wispr 2.0 — Cinematic AI Voice Dictation for Windows 11 & 10</title>
+  <meta name="description" content="Open Wispr 2.0 is a clean-room, privacy-first AI speech-to-text desktop companion. Hold Caps Lock in any window, speak naturally in English, Hindi, or Hinglish, and watch your words typed instantly." />
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/rajviyash9136freefr-tech/OpenWisprFlow/main/assets/icon.png" />
   
-  <!-- Fonts -->
+  <!-- Fonts: Newsreader (Editorial Serif), Plus Jakarta Sans, JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400;1,6..72,500&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -28,11 +28,11 @@
             brand: {
               gold: '#F59E0B',
               amber: '#D97706',
-              dark: '#080807',
-              surface: '#11110E',
-              card: '#161612',
-              cardHover: '#1B1B16',
-              border: 'rgba(255, 255, 255, 0.07)',
+              dark: '#070706',
+              surface: '#0E0E0C',
+              card: '#141411',
+              cardHover: '#1A1A16',
+              border: 'rgba(255, 255, 255, 0.08)',
             }
           }
         }
@@ -42,173 +42,208 @@
 
   <style>
     body {
-      background-color: #080807;
+      background-color: #070706;
       color: #ECEBE8;
       font-feature-settings: "cv02", "cv03", "cv04", "cv11";
       overflow-x: hidden;
     }
     
-    /* Radial Background Glow */
+    /* Cinematic Ambient Lighting */
     .ambient-glow {
-      background: radial-gradient(circle at 50% -10%, rgba(245, 158, 11, 0.10) 0%, rgba(8, 8, 7, 0) 65%);
+      background: radial-gradient(circle at 50% -5%, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.03) 45%, transparent 75%);
     }
 
-    /* Glass Cards */
+    .ambient-glow-bottom {
+      background: radial-gradient(circle at 50% 105%, rgba(245, 158, 11, 0.08) 0%, transparent 60%);
+    }
+
+    /* Glass Panels */
     .glass-panel {
-      background: rgba(18, 18, 15, 0.78);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
+      background: rgba(18, 18, 14, 0.75);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 24px 48px -18px rgba(0, 0, 0, 0.85);
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .glass-panel:hover {
-      border-color: rgba(245, 158, 11, 0.3);
+      border-color: rgba(245, 158, 11, 0.35);
+      transform: translateY(-2px);
+      box-shadow: 0 30px 60px -15px rgba(245, 158, 11, 0.12);
+    }
+
+    /* Glowing Primary Card */
+    .featured-card {
+      background: linear-gradient(180deg, rgba(28, 26, 20, 0.95) 0%, rgba(16, 16, 13, 0.95) 100%);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      box-shadow: 0 0 50px -12px rgba(245, 158, 11, 0.18);
+    }
+    .featured-card:hover {
+      border-color: rgba(245, 158, 11, 0.65);
+      box-shadow: 0 0 65px -8px rgba(245, 158, 11, 0.28);
     }
 
     /* Scroll Animation Reveal */
     .reveal {
       opacity: 0;
-      transform: translateY(32px);
-      transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: translateY(28px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
       will-change: opacity, transform;
     }
     .reveal.active {
       opacity: 1;
       transform: translateY(0);
     }
-    .delay-1 { transition-delay: 100ms; }
-    .delay-2 { transition-delay: 200ms; }
-    .delay-3 { transition-delay: 300ms; }
-    .delay-4 { transition-delay: 400ms; }
+    .delay-1 { transition-delay: 80ms; }
+    .delay-2 { transition-delay: 160ms; }
+    .delay-3 { transition-delay: 240ms; }
+    .delay-4 { transition-delay: 320ms; }
 
     /* Waveform Pulse Animation */
     @keyframes barWave {
       0%, 100% { height: 4px; }
-      50% { height: 24px; }
+      50% { height: 26px; }
     }
     .wave-bar {
       animation: barWave 0.7s ease-in-out infinite;
     }
+
+    /* Subtle grid overlay */
+    .bg-grid-pattern {
+      background-size: 40px 40px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    }
   </style>
 </head>
-<body class="selection:bg-amber-500/20 selection:text-amber-300 antialiased min-h-screen flex flex-col justify-between">
+<body class="selection:bg-amber-500/25 selection:text-amber-200 antialiased min-h-screen flex flex-col justify-between bg-grid-pattern">
 
-  <!-- Ambient Background Glow -->
+  <!-- Ambient Cinematic Background Lighting -->
   <div class="fixed inset-0 ambient-glow pointer-events-none z-0"></div>
+  <div class="fixed inset-0 ambient-glow-bottom pointer-events-none z-0"></div>
 
   <!-- Navigation Bar -->
-  <header class="sticky top-0 z-50 border-b border-white/[0.06] bg-[#080807]/80 backdrop-blur-xl transition-all duration-300">
+  <header class="sticky top-0 z-50 border-b border-white/[0.06] bg-[#070706]/85 backdrop-blur-2xl transition-all duration-300">
     <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-600 to-amber-400 p-[1px] shadow-md shadow-amber-500/20">
-          <div class="w-full h-full bg-[#11110E] rounded-[7px] flex items-center justify-center">
+      <div class="flex items-center space-x-3.5">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-300 p-[1px] shadow-lg shadow-amber-500/25">
+          <div class="w-full h-full bg-[#0E0E0C] rounded-[7px] flex items-center justify-center">
             <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
               <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
             </svg>
           </div>
         </div>
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-2.5">
           <span class="text-base font-bold tracking-tight text-white font-sans">Open Wispr</span>
-          <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 font-semibold">v1.0.6</span>
+          <span class="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/35 text-amber-300 font-semibold tracking-wide">v2.0.0 Major</span>
         </div>
       </div>
 
-      <nav class="hidden md:flex items-center space-x-7 text-xs font-medium text-neutral-400">
-        <a href="#demo" class="hover:text-white transition-colors">Interactive Demo</a>
+      <nav class="hidden md:flex items-center space-x-8 text-xs font-medium text-neutral-400">
+        <a href="#demo" class="hover:text-white transition-colors">Flow Bar Simulator</a>
         <a href="#features" class="hover:text-white transition-colors">Architecture</a>
         <a href="#how-it-works" class="hover:text-white transition-colors">How It Works</a>
-        <a href="#downloads" class="hover:text-white transition-colors">Installers</a>
+        <a href="#downloads" class="hover:text-white transition-colors">Installers (Win 11 & 10)</a>
       </nav>
 
       <div class="flex items-center space-x-3">
         <a href="https://github.com/rajviyash9136freefr-tech/OpenWisprFlow" target="_blank" rel="noreferrer"
-           class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-medium text-neutral-300 transition-all">
+           class="hidden sm:flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-medium text-neutral-300 transition-all">
           <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
             <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
           </svg>
           <span>GitHub</span>
         </a>
-        <a href="https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6" target="_blank" rel="noreferrer"
-           class="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-neutral-950 text-xs font-bold transition-all shadow-md shadow-amber-500/20">
-          Download Installer
+        <a href="#downloads"
+           class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-neutral-950 text-xs font-bold transition-all shadow-lg shadow-amber-500/25 flex items-center space-x-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          <span>Get v2.0.0 Setup</span>
         </a>
       </div>
     </div>
   </header>
 
-  <!-- Hero Section -->
+  <!-- Hero Section with Cinematic Typography -->
   <main class="relative z-10">
-    <section class="pt-20 pb-16 px-6 text-center max-w-4xl mx-auto">
-      <div class="reveal inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold mb-6">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>Version 1.0.6 Release — Official Setup Installer</span>
+    <section class="pt-24 pb-20 px-6 text-center max-w-5xl mx-auto">
+      
+      <!-- Major Announcement Badge -->
+      <div class="reveal inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs font-semibold mb-8 shadow-inner">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>Version 2.0.0 Released — Unified Windows 11 & 10 Support</span>
       </div>
 
-      <h1 class="reveal delay-1 text-5xl md:text-6xl font-serif font-medium tracking-tight text-white mb-6 leading-[1.15]">
-        Voice dictation for every app.<br />
-        <span class="italic font-normal bg-gradient-to-r from-amber-400 via-amber-200 to-amber-500 bg-clip-text text-transparent">
-          Three times faster than typing.
+      <!-- Main Headline: Cinematic Editorial Serif -->
+      <h1 class="reveal delay-1 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-serif font-normal tracking-[-0.03em] text-white mb-8 leading-[1.05]">
+        Speak your mind.<br />
+        <span class="italic font-normal bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 bg-clip-text text-transparent">
+          Watch it typed everywhere.
         </span>
       </h1>
 
-      <p class="reveal delay-2 text-base md:text-lg text-neutral-400 max-w-2xl mx-auto mb-10 leading-relaxed font-sans font-light">
-        A private, open-source desktop assistant. Hold down <code class="px-2 py-0.5 rounded bg-white/10 text-white font-mono text-xs border border-white/10">Caps Lock</code> in any window, speak naturally, and release to auto-paste your words with zero latency.
+      <!-- Cinematic Subtitle -->
+      <p class="reveal delay-2 text-base md:text-xl text-neutral-400 max-w-2xl mx-auto mb-12 leading-relaxed font-sans font-light">
+        A clean-room, open-source desktop voice assistant. Hold down <kbd class="px-2.5 py-0.5 rounded-md bg-white/10 text-white font-mono text-xs border border-white/15 shadow-sm">Caps Lock</kbd> in any application, speak naturally in English, Hindi, or Hinglish, and release to auto-paste with zero delay.
       </p>
 
       <!-- Primary Action Buttons -->
-      <div class="reveal delay-3 flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-16">
-        <a href="https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6" target="_blank" rel="noreferrer"
-           class="w-full sm:w-auto px-7 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs tracking-wide transition-all shadow-lg shadow-amber-500/25 flex items-center justify-center space-x-2">
+      <div class="reveal delay-3 flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+        <a href="#downloads"
+           class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-neutral-950 font-bold text-sm tracking-wide transition-all shadow-xl shadow-amber-500/25 flex items-center justify-center space-x-2.5 transform hover:-translate-y-0.5">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
           </svg>
-          <span>Download Setup Installer (Windows 11 & 10)</span>
+          <span>Download Unified Setup (Windows 11 & 10)</span>
         </a>
         <a href="https://github.com/rajviyash9136freefr-tech/OpenWisprFlow" target="_blank" rel="noreferrer"
-           class="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#141410] hover:bg-[#1B1B15] border border-white/10 text-neutral-300 font-medium text-xs transition-all flex items-center justify-center space-x-2">
-          <span>Explore Source</span>
-          <svg class="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+           class="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-[#141411] hover:bg-[#1C1C17] border border-white/10 text-neutral-200 font-medium text-sm transition-all flex items-center justify-center space-x-2">
+          <span>GitHub Source & Releases</span>
+          <svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
           </svg>
         </a>
       </div>
 
-      <!-- Interactive In-Browser Flow Bar Simulation -->
-      <div id="demo" class="reveal delay-4 max-w-xl mx-auto rounded-2xl glass-panel p-6 text-left relative overflow-hidden">
-        <div class="flex items-center justify-between pb-4 border-b border-white/[0.06] mb-5">
+      <!-- Interactive In-Browser Flow Bar Simulator -->
+      <div id="demo" class="reveal delay-4 max-w-2xl mx-auto rounded-3xl glass-panel p-7 text-left relative overflow-hidden border border-white/10 shadow-2xl">
+        <div class="flex items-center justify-between pb-4 border-b border-white/[0.06] mb-6">
           <div class="flex items-center space-x-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-neutral-600"></span>
-            <span class="w-2.5 h-2.5 rounded-full bg-neutral-600"></span>
-            <span class="w-2.5 h-2.5 rounded-full bg-neutral-600"></span>
-            <span class="text-[11px] font-mono text-neutral-500 ml-2">Live Flow Bar Simulation</span>
+            <span class="w-3 h-3 rounded-full bg-rose-500/80"></span>
+            <span class="w-3 h-3 rounded-full bg-amber-500/80"></span>
+            <span class="w-3 h-3 rounded-full bg-emerald-500/80"></span>
+            <span class="text-[11px] font-mono text-neutral-400 ml-2 tracking-wide uppercase">Live Flow Bar Experience</span>
           </div>
-          <span class="text-[11px] font-mono text-amber-400 flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-            Ready to Speak
+          <span class="text-[11px] font-mono text-amber-300 flex items-center gap-1.5 font-medium">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Interactive Simulation
           </span>
         </div>
 
         <!-- The Floating Pill Component Simulator -->
-        <div class="p-6 bg-[#0B0B09] rounded-xl border border-white/[0.05] flex flex-col items-center justify-center min-h-[140px] relative">
+        <div class="p-8 bg-[#0B0B09] rounded-2xl border border-white/[0.06] flex flex-col items-center justify-center min-h-[160px] relative">
           
-          <div id="flow-pill" class="flex items-center gap-3 px-4 py-2.5 rounded-full bg-[#141411] border border-white/10 shadow-2xl transition-all duration-300">
+          <div id="flow-pill" class="flex items-center gap-3.5 px-5 py-3 rounded-full bg-[#151512]/95 border border-white/15 shadow-[0_16px_36px_rgba(0,0,0,0.8)] backdrop-blur-xl transition-all duration-300 cursor-pointer">
             <!-- Idle State -->
-            <div id="pill-idle" class="flex items-center gap-2.5 text-xs">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse"></span>
+            <div id="pill-idle" class="flex items-center gap-3 text-xs">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)] animate-pulse"></span>
               <span class="font-semibold text-white tracking-tight text-xs">Open Wispr</span>
               <span class="text-[#55544E]">|</span>
-              <div class="flex items-center gap-1.5 text-[#A8A7A0] text-[11px]">
+              <div class="flex items-center gap-1.5 text-[#A8A7A0] text-xs">
                 <span>Hold</span>
-                <span class="px-1.5 py-0.5 rounded bg-white/10 text-white font-mono text-[10px] font-bold border border-white/10">Caps Lock</span>
+                <span class="px-2 py-0.5 rounded bg-white/10 text-white font-mono text-[10px] font-bold border border-white/15">Caps Lock</span>
                 <span>to speak</span>
               </div>
             </div>
 
             <!-- Recording State (Hidden by default) -->
-            <div id="pill-recording" class="hidden flex items-center gap-3 text-xs">
-              <div class="flex items-center gap-1.5 text-amber-400">
-                <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+            <div id="pill-recording" class="hidden flex items-center gap-3.5 text-xs">
+              <div class="flex items-center gap-2 text-amber-400">
+                <span class="relative flex h-2.5 w-2.5">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                </span>
                 <span id="recording-timer" class="font-mono text-xs font-bold text-white">0:01</span>
               </div>
               <div class="flex items-center gap-[3px] h-6 px-1">
@@ -225,208 +260,230 @@
 
             <!-- Transcribing State (Hidden by default) -->
             <div id="pill-transcribing" class="hidden flex items-center gap-2 text-xs text-amber-300">
-              <svg class="w-3.5 h-3.5 animate-spin text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <svg class="w-4 h-4 animate-spin text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span class="font-medium text-white text-xs">Transcribing...</span>
+              <span class="font-medium text-white text-xs">Transcribing audio...</span>
             </div>
 
             <!-- Pasted State (Hidden by default) -->
-            <div id="pill-pasted" class="hidden flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-              </svg>
+            <div id="pill-pasted" class="hidden flex items-center gap-2 text-xs font-semibold text-emerald-400">
+              <div class="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
               <span>Pasted to Active Window</span>
             </div>
           </div>
 
           <!-- Interactive Test Button -->
-          <div class="mt-6 flex flex-col items-center">
+          <div class="mt-7 flex flex-col items-center">
             <button id="sim-trigger"
-                    class="px-5 py-2 rounded-lg bg-white/5 hover:bg-white/10 active:bg-amber-500 active:text-neutral-950 border border-white/10 text-xs font-medium text-neutral-300 transition-all select-none">
-              Press and Hold Here to Dictate (or Hold Spacebar)
+                    class="px-6 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 active:bg-amber-500 active:text-neutral-950 border border-amber-500/30 text-xs font-medium text-amber-300 transition-all select-none shadow-md">
+              Click & Hold to Dictate (or Hold Spacebar on Desktop)
             </button>
-            <span class="text-[10px] text-neutral-500 mt-2 font-mono">Simulator Demo: speak English or Hindi sentence</span>
+            <span class="text-[11px] text-neutral-500 mt-2 font-mono">Test Hindi, English, and Hinglish dictation</span>
           </div>
         </div>
 
-        <!-- Simulated Active Text Input Destination -->
-        <div class="mt-4 p-3.5 rounded-lg bg-[#0C0C0A] border border-white/[0.04]">
-          <div class="flex items-center justify-between text-[10px] text-neutral-500 font-mono mb-1.5">
-            <span>TARGET APPLICATION (NOTEPAD / BROWSER / SLACK)</span>
-            <span id="typing-indicator" class="text-neutral-600">IDLE</span>
+        <!-- Simulated Active Caret Destination -->
+        <div class="mt-5 p-4 rounded-xl bg-[#0D0D0B] border border-white/[0.05]">
+          <div class="flex items-center justify-between text-[10px] text-neutral-400 font-mono mb-2">
+            <span>TARGET APPLICATION (VS CODE / CHROME / SLACK / NOTEPAD)</span>
+            <span id="typing-indicator" class="text-neutral-500">READY</span>
           </div>
-          <div id="mock-output" class="font-sans text-xs text-neutral-300 min-h-[38px] flex items-center">
-            Click and hold the button above to simulate universal push-to-talk dictation.
+          <div id="mock-output" class="font-sans text-xs text-neutral-300 min-h-[44px] flex items-center leading-relaxed">
+            Hold the button above and speak your thoughts to test universal caret injection.
           </div>
         </div>
       </div>
     </section>
 
     <!-- Architecture & Core Specifications -->
-    <section id="features" class="py-20 px-6 max-w-5xl mx-auto border-t border-white/[0.05]">
+    <section id="features" class="py-24 px-6 max-w-5xl mx-auto border-t border-white/[0.06]">
       <div class="text-center max-w-2xl mx-auto mb-16">
-        <h2 class="reveal text-3xl md:text-4xl font-serif font-medium text-white mb-3">
+        <h2 class="reveal text-3xl md:text-5xl font-serif font-medium text-white mb-4">
           Engineered for accuracy and privacy.
         </h2>
         <p class="reveal delay-1 text-neutral-400 text-xs md:text-sm font-light">
-          Built with native low-level keyboard hooks and high-pass audio filtering. Zero accounts, zero tracking.
+          Low-level OS input hooks, adaptive noise suppression, and zero telemetry.
         </p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Feature 1 -->
-        <div class="reveal delay-1 glass-panel rounded-2xl p-6">
-          <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-5">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+        <div class="reveal delay-1 glass-panel rounded-3xl p-7">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-6">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
           </div>
-          <h3 class="text-base font-bold text-white mb-2">Dedicated Push-to-Talk</h3>
+          <h3 class="text-lg font-bold text-white mb-2 font-sans">Low-Level Push-to-Talk</h3>
           <p class="text-neutral-400 text-xs leading-relaxed">
-            Standard mode triggers exclusively on Caps Lock to prevent accidental activations. Optional single Control mode available in custom settings.
+            Hooks at the Windows kernel level via SetWindowsHookEx to intercept Caps Lock without toggling keyboard casing. Includes single-key F8 and Ctrl+Space fallbacks.
           </p>
         </div>
 
         <!-- Feature 2 -->
-        <div class="reveal delay-2 glass-panel rounded-2xl p-6">
-          <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-5">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"/></svg>
+        <div class="reveal delay-2 glass-panel rounded-3xl p-7">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-6">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"/></svg>
           </div>
-          <h3 class="text-base font-bold text-white mb-2">Noise Suppression</h3>
+          <h3 class="text-lg font-bold text-white mb-2 font-sans">Adaptive Noise Filtering</h3>
           <p class="text-neutral-400 text-xs leading-relaxed">
-            16 kHz Mono PCM audio pipeline with 80 Hz high-pass filter and pre-emphasis. Cleans fan noise, HVAC rumble, and room reverberation.
+            85 Hz Butterworth high-pass filter strips PC fan rumble and AC hum. 400ms rolling circular pre-roll buffer ensures the first syllable is never clipped.
           </p>
         </div>
 
         <!-- Feature 3 -->
-        <div class="reveal delay-3 glass-panel rounded-2xl p-6">
-          <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-5">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+        <div class="reveal delay-3 glass-panel rounded-3xl p-7">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-6">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
           </div>
-          <h3 class="text-base font-bold text-white mb-2">Hindi & Hinglish Support</h3>
+          <h3 class="text-lg font-bold text-white mb-2 font-sans">Hinglish & Dual Script</h3>
           <p class="text-neutral-400 text-xs leading-relaxed">
-            Seamlessly handles mixed Hindi and English speech with real-time Devanagari-to-Roman transliteration and hallucination loop suppression.
+            Intelligently transcribes natural mixed Hindi and English speech with real-time Devanagari to Roman transliteration options and repetitive loop filtering.
           </p>
         </div>
       </div>
     </section>
 
-    <!-- How It Works Flow -->
-    <section id="how-it-works" class="py-16 px-6 max-w-4xl mx-auto">
-      <div class="text-center max-w-2xl mx-auto mb-14">
-        <h2 class="reveal text-2xl md:text-3xl font-serif font-medium text-white mb-2">
-          Three steps to dictation.
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="py-20 px-6 max-w-4xl mx-auto">
+      <div class="text-center max-w-2xl mx-auto mb-16">
+        <h2 class="reveal text-3xl md:text-4xl font-serif font-medium text-white mb-3">
+          Three steps to frictionless dictation.
         </h2>
         <p class="reveal delay-1 text-neutral-400 text-xs font-light">
-          Universal compatibility with all Windows applications.
+          Universal compatibility across every Windows application.
         </p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div class="reveal delay-1 p-5 rounded-xl bg-[#11110E] border border-white/[0.05]">
-          <div class="text-amber-500 font-mono text-2xl font-bold mb-2">01</div>
-          <h4 class="text-sm font-bold text-white mb-1.5">Hold Caps Lock</h4>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="reveal delay-1 p-6 rounded-2xl bg-[#11110E] border border-white/[0.06]">
+          <div class="text-amber-500 font-mono text-3xl font-bold mb-3">01</div>
+          <h4 class="text-base font-bold text-white mb-2">Hold Caps Lock</h4>
           <p class="text-neutral-400 text-xs leading-relaxed">
-            Press and hold Caps Lock in any window or text area.
+            Press and hold Caps Lock in any window, browser, terminal, or text field.
           </p>
         </div>
 
-        <div class="reveal delay-2 p-5 rounded-xl bg-[#11110E] border border-white/[0.05]">
-          <div class="text-amber-500 font-mono text-2xl font-bold mb-2">02</div>
-          <h4 class="text-sm font-bold text-white mb-1.5">Speak Naturally</h4>
+        <div class="reveal delay-2 p-6 rounded-2xl bg-[#11110E] border border-white/[0.06]">
+          <div class="text-amber-500 font-mono text-3xl font-bold mb-3">02</div>
+          <h4 class="text-base font-bold text-white mb-2">Speak Naturally</h4>
           <p class="text-neutral-400 text-xs leading-relaxed">
-            Speak your thoughts in English, Hindi, or Hinglish.
+            Speak your thoughts in English, Hindi, or mixed Hinglish.
           </p>
         </div>
 
-        <div class="reveal delay-3 p-5 rounded-xl bg-[#11110E] border border-white/[0.05]">
-          <div class="text-amber-500 font-mono text-2xl font-bold mb-2">03</div>
-          <h4 class="text-sm font-bold text-white mb-1.5">Release to Paste</h4>
+        <div class="reveal delay-3 p-6 rounded-2xl bg-[#11110E] border border-white/[0.06]">
+          <div class="text-amber-500 font-mono text-3xl font-bold mb-3">03</div>
+          <h4 class="text-base font-bold text-white mb-2">Release to Paste</h4>
           <p class="text-neutral-400 text-xs leading-relaxed">
-            Release the key. Audio is transcribed and pasted into your active caret.
+            Release the key. Audio is transcribed and pasted into your active caret in under 30ms.
           </p>
         </div>
       </div>
     </section>
 
-    <!-- Dedicated Downloads Section -->
-    <section id="downloads" class="py-20 border-t border-white/[0.05] bg-[#0A0A08] px-6">
-      <div class="max-w-4xl mx-auto">
-        <div class="text-center max-w-2xl mx-auto mb-14">
-          <div class="reveal inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-4">
-            <span>Verified Release v1.0.6</span>
+    <!-- Dedicated Downloads Section with Combined Windows 11 & 10 Card -->
+    <section id="downloads" class="py-24 border-t border-white/[0.06] bg-[#0A0A08] px-6">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center max-w-2xl mx-auto mb-16">
+          <div class="reveal inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-4">
+            <span>Official Release v2.0.0</span>
           </div>
-          <h2 class="reveal delay-1 text-3xl md:text-4xl font-serif font-medium text-white mb-3">
+          <h2 class="reveal delay-1 text-4xl md:text-5xl font-serif font-medium text-white mb-4">
             Download Setup Installers
           </h2>
           <p class="reveal delay-2 text-neutral-400 text-xs md:text-sm font-light">
-            Standalone NSIS setup installers with zero external dependencies. Clicking download opens the official GitHub release page.
+            Standalone NSIS setup installers with zero external dependencies and zero logins.
           </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
-          <!-- 1. Unified Windows 11 & 10 Card -->
-          <div class="reveal delay-1 glass-panel rounded-2xl p-6 flex flex-col justify-between">
-            <div>
-              <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-4">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
-              </div>
-              <h3 class="text-base font-bold text-white mb-1">Windows 11 & 10</h3>
-              <p class="text-neutral-400 text-xs mb-6 leading-relaxed">Unified custom NSIS setup installer supporting Windows 11 and 10 with native kernel input hooks and auto-registration.</p>
+        <!-- Download Cards Grid: Combined Windows 11 & 10 + Mac + Linux -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 max-w-5xl mx-auto">
+          
+          <!-- 1. Featured Combined Windows 11 & 10 Card (Dominant Hero Card) -->
+          <div class="reveal delay-1 md:col-span-12 lg:col-span-6 featured-card rounded-3xl p-8 flex flex-col justify-between relative overflow-hidden">
+            <div class="absolute top-0 right-0 px-4 py-1.5 bg-amber-500/20 border-b border-l border-amber-500/30 text-amber-300 font-mono text-[10px] font-bold uppercase tracking-wider rounded-bl-xl">
+              Recommended • Unified
             </div>
+            
             <div>
-              <a href="https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6" target="_blank" rel="noreferrer"
-                 class="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 text-xs font-bold transition-all text-center flex items-center justify-center space-x-1.5 shadow-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                <span>Download Windows Setup</span>
+              <div class="w-12 h-12 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 mb-6">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+              </div>
+              <div class="flex items-center gap-2 mb-2">
+                <h3 class="text-xl font-bold text-white">Windows 11 & Windows 10</h3>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold">Combined 64-bit</span>
+              </div>
+              <p class="text-neutral-300 text-xs mb-8 leading-relaxed">
+                Unified setup installer compatible with both Windows 11 and Windows 10. Automatically configures low-level push-to-talk hooks, auto-restart watchdog, mic auto-negotiation, and zero-latency caret pasting.
+              </p>
+            </div>
+
+            <div>
+              <a href="https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v2.0.0" target="_blank" rel="noreferrer"
+                 class="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 text-sm font-bold transition-all text-center flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/25">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span>Download Windows Setup (v2.0.0)</span>
               </a>
-              <span class="text-[10px] text-neutral-500 block text-center mt-2 font-mono">Open.Wispr.Setup.1.0.6.Windows.exe</span>
+              <div class="flex items-center justify-between text-[10px] text-neutral-400 mt-3 font-mono">
+                <span>File: Open.Wispr.Setup.2.0.0.Windows.exe</span>
+                <span>Size: ~78 MB</span>
+              </div>
             </div>
           </div>
 
           <!-- 2. macOS Universal Card -->
-          <div class="reveal delay-2 glass-panel rounded-2xl p-6 flex flex-col justify-between">
+          <div class="reveal delay-2 md:col-span-6 lg:col-span-3 glass-panel rounded-3xl p-7 flex flex-col justify-between">
             <div>
-              <div class="w-10 h-10 rounded-xl bg-neutral-200/10 border border-neutral-200/20 flex items-center justify-center text-white mb-4">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.13c.63-.78 1.06-1.85.95-2.93-.92.04-2.02.61-2.67 1.39-.58.68-1.09 1.77-.95 2.83 1.03.08 2.04-.51 2.67-1.29z"/></svg>
+              <div class="w-12 h-12 rounded-2xl bg-neutral-200/10 border border-neutral-200/20 flex items-center justify-center text-white mb-6">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.13c.63-.78 1.06-1.85.95-2.93-.92.04-2.02.61-2.67 1.39-.58.68-1.09 1.77-.95 2.83 1.03.08 2.04-.51 2.67-1.29z"/></svg>
               </div>
-              <h3 class="text-base font-bold text-white mb-1">macOS</h3>
-              <p class="text-neutral-400 text-xs mb-6 leading-relaxed">Universal application bundle for Apple Silicon (M1/M2/M3/M4) and Intel with osascript caret injection.</p>
+              <h3 class="text-base font-bold text-white mb-1">macOS Universal</h3>
+              <p class="text-neutral-400 text-xs mb-6 leading-relaxed">
+                Universal bundle for Apple Silicon (M1/M2/M3/M4) & Intel with osascript caret injection.
+              </p>
             </div>
             <div>
-              <a href="https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6" target="_blank" rel="noreferrer"
-                 class="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 text-xs font-bold transition-all text-center flex items-center justify-center space-x-1.5 shadow-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                <span>Download macOS App</span>
+              <a href="https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v2.0.0" target="_blank" rel="noreferrer"
+                 class="w-full py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all text-center flex items-center justify-center space-x-1.5 border border-white/15">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span>Download Mac (.zip)</span>
               </a>
-              <span class="text-[10px] text-neutral-500 block text-center mt-2 font-mono">Open-Wispr-1.0.6-Mac.zip</span>
+              <span class="text-[10px] text-neutral-500 block text-center mt-2 font-mono">Open-Wispr-2.0.0-Mac.zip</span>
             </div>
           </div>
 
           <!-- 3. Linux Distribution Card -->
-          <div class="reveal delay-3 glass-panel rounded-2xl p-6 flex flex-col justify-between">
+          <div class="reveal delay-3 md:col-span-6 lg:col-span-3 glass-panel rounded-3xl p-7 flex flex-col justify-between">
             <div>
-              <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-4">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.012 0c-4.482 0-8.118 3.636-8.118 8.118 0 2.213.882 4.225 2.316 5.694-1.895 2.147-3.054 4.954-3.054 8.07 0 .041.002.08.004.118h17.704c.002-.038.004-.077.004-.118 0-3.116-1.159-5.923-3.054-8.07 1.434-1.469 2.316-3.481 2.316-5.694 0-4.482-3.636-8.118-8.118-8.118z"/></svg>
+              <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-6">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12.012 0c-4.482 0-8.118 3.636-8.118 8.118 0 2.213.882 4.225 2.316 5.694-1.895 2.147-3.054 4.954-3.054 8.07 0 .041.002.08.004.118h17.704c.002-.038.004-.077.004-.118 0-3.116-1.159-5.923-3.054-8.07 1.434-1.469 2.316-3.481 2.316-5.694 0-4.482-3.636-8.118-8.118-8.118z"/></svg>
               </div>
-              <h3 class="text-base font-bold text-white mb-1">Linux</h3>
-              <p class="text-neutral-400 text-xs mb-6 leading-relaxed">Full x86-64 binary distribution for Ubuntu, Debian, Fedora, and Arch Linux with xdotool and wtype integration.</p>
+              <h3 class="text-base font-bold text-white mb-1">Linux x86-64</h3>
+              <p class="text-neutral-400 text-xs mb-6 leading-relaxed">
+                Complete bundle for Ubuntu, Debian, Fedora, and Arch with xdotool and wtype.
+              </p>
             </div>
             <div>
-              <a href="https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6" target="_blank" rel="noreferrer"
-                 class="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 text-xs font-bold transition-all text-center flex items-center justify-center space-x-1.5 shadow-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                <span>Download Linux Bundle</span>
+              <a href="https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v2.0.0" target="_blank" rel="noreferrer"
+                 class="w-full py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all text-center flex items-center justify-center space-x-1.5 border border-white/15">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span>Download Linux (.tar.gz)</span>
               </a>
-              <span class="text-[10px] text-neutral-500 block text-center mt-2 font-mono">Open-Wispr-1.0.6-Linux.tar.gz</span>
+              <span class="text-[10px] text-neutral-500 block text-center mt-2 font-mono">Open-Wispr-2.0.0-Linux.tar.gz</span>
             </div>
           </div>
+
         </div>
 
-        <div class="mt-8 text-center">
-          <a href="https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6" target="_blank" rel="noreferrer"
-             class="inline-flex items-center space-x-1.5 text-xs text-neutral-400 hover:text-amber-400 transition-colors font-mono">
-            <span>View release page on GitHub</span>
+        <div class="mt-12 text-center">
+          <a href="https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v2.0.0" target="_blank" rel="noreferrer"
+             class="inline-flex items-center space-x-2 text-xs text-neutral-400 hover:text-amber-300 transition-colors font-mono">
+            <span>Explore all v2.0.0 release binaries & checksums on GitHub Releases</span>
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
@@ -437,18 +494,18 @@
   </main>
 
   <!-- Footer -->
-  <footer class="border-t border-white/[0.05] py-10 px-6 bg-[#060605] text-neutral-500 text-xs">
-    <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+  <footer class="border-t border-white/[0.06] py-12 px-6 bg-[#050504] text-neutral-500 text-xs">
+    <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
       <div class="flex items-center space-x-3">
         <span class="font-bold text-white text-xs">Open Wispr</span>
         <span>•</span>
-        <span>Open Source AI Voice Assistant</span>
+        <span>Clean-Room Open Source Project</span>
         <span>•</span>
         <span>MIT License</span>
       </div>
       <div class="flex items-center space-x-6">
         <a href="https://github.com/rajviyash9136freefr-tech/OpenWisprFlow" target="_blank" rel="noreferrer" class="hover:text-neutral-300 transition-colors">GitHub Repository</a>
-        <a href="https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v1.0.6" target="_blank" rel="noreferrer" class="hover:text-neutral-300 transition-colors">Releases</a>
+        <a href="https://github.com/rajviyash9136freefr-tech/OpenWisprFlow/releases/tag/v2.0.0" target="_blank" rel="noreferrer" class="hover:text-neutral-300 transition-colors">Releases</a>
       </div>
     </div>
   </footer>
@@ -490,7 +547,7 @@
       "Let's review the architectural pull request before merging to main.",
       "Mujhe meeting ke action items jaldi summarize karke bhej do.",
       "Open Wispr records voice cleanly and auto-pastes with zero delay.",
-      "Humne audio pipeline me high-pass filter add kiya hai noise reduction ke liye."
+      "Yeh Hinglish dictation hai jo natural conversation ko perfectly transcribe karta hai."
     ];
     let sentenceIndex = 0;
 
@@ -498,8 +555,8 @@
       if (recording) return;
       recording = true;
       seconds = 0;
-      indicator.textContent = "RECORDING AUDIO...";
-      indicator.className = "text-amber-400 font-mono";
+      indicator.textContent = "RECORDING MICROPHONE...";
+      indicator.className = "text-amber-400 font-mono font-semibold";
 
       pillIdle.classList.add('hidden');
       pillTranscribing.classList.add('hidden');
@@ -519,14 +576,14 @@
 
       pillRecording.classList.add('hidden');
       pillTranscribing.classList.remove('hidden');
-      indicator.textContent = "TRANSCRIBING...";
-      indicator.className = "text-amber-300 font-mono";
+      indicator.textContent = "TRANSCRIBING AUDIO...";
+      indicator.className = "text-amber-300 font-mono font-semibold";
 
       setTimeout(() => {
         pillTranscribing.classList.add('hidden');
         pillPasted.classList.remove('hidden');
-        indicator.textContent = "AUTO-PASTED";
-        indicator.className = "text-emerald-400 font-mono";
+        indicator.textContent = "PASTED TO ACTIVE WINDOW";
+        indicator.className = "text-emerald-400 font-mono font-semibold";
 
         const textToPaste = sampleSentences[sentenceIndex % sampleSentences.length];
         sentenceIndex++;
@@ -542,12 +599,12 @@
             setTimeout(() => {
               pillPasted.classList.add('hidden');
               pillIdle.classList.remove('hidden');
-              indicator.textContent = "IDLE";
-              indicator.className = "text-neutral-600 font-mono";
+              indicator.textContent = "READY";
+              indicator.className = "text-neutral-500 font-mono";
             }, 2500);
           }
-        }, 18);
-      }, 800);
+        }, 16);
+      }, 750);
     }
 
     // Mouse / Touch events on button
