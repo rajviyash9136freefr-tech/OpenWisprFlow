@@ -13,7 +13,7 @@ interface AppStore {
   waveformData: number[];
   activeTab: 'dictation' | 'insights' | 'dictionary' | 'snippets' | 'style' | 'scratchpad';
   isSettingsOpen: boolean;
-  settingsTab: 'general' | 'system' | 'languages';
+  settingsTab: 'general' | 'ai' | 'system' | 'languages';
   searchQuery: string;
 
   // Actions
@@ -67,7 +67,7 @@ export const useStore = create<AppStore>((set, get) => ({
     translateMode: false,
     hinglishMode: false,
     soundEffects: true,
-    apiProvider: 'huggingface',
+    apiProvider: 'groq',
     hfToken: '',
     hfModel: 'openai/whisper-large-v3-turbo',
     groqApiKey: '',
@@ -78,6 +78,8 @@ export const useStore = create<AppStore>((set, get) => ({
     hfFallbackModels: ['openai/whisper-large-v3-turbo', 'openai/whisper-large-v3'],
     customWindowPosition: null,
     userName: '',
+    hasCompletedOnboarding: false,
+    smartStructuring: true,
   },
   history: [],
   dictionary: [],

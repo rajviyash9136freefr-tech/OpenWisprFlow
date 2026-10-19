@@ -15,7 +15,7 @@ import { OpenWisprLogo } from './OpenWisprLogo';
 import { BRANDING } from '../../shared/branding';
 
 export const Sidebar: React.FC = () => {
-  const { activeTab, setActiveTab, openSettings } = useStore();
+  const { activeTab, setActiveTab, openSettings, preferences } = useStore();
 
   interface NavItem {
     id: any;
@@ -69,17 +69,29 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Footer Actions */}
-      <div className="p-3 space-y-1 border-t border-[#E5E4DE]/60 dark:border-white/10">
+      <div className="p-3 space-y-1.5 border-t border-[#E5E4DE]/60 dark:border-white/10">
+        <div className="px-2.5 py-1.5 flex items-center gap-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.04]">
+          <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-xs flex items-center justify-center shrink-0">
+            {(preferences.userName || 'U').charAt(0).toUpperCase()}
+          </div>
+          <div className="truncate flex-1">
+            <div className="text-xs font-bold text-[#1A1917] dark:text-white truncate">
+              {preferences.userName || 'Open Wispr User'}
+            </div>
+            <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">100% Free Plan</div>
+          </div>
+        </div>
+
         <button
           onClick={() => openSettings('general')}
-          className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#64635D] dark:text-[#A8A7A0] hover:text-[#1A1917] dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.04] transition-colors"
+          className="w-full flex items-center space-x-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#64635D] dark:text-[#A8A7A0] hover:text-[#1A1917] dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.04] transition-colors"
         >
           <Settings className="w-4 h-4 text-[#7A7973]" />
           <span>Settings</span>
         </button>
         <button
           onClick={() => openSettings('languages')}
-          className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#64635D] dark:text-[#A8A7A0] hover:text-[#1A1917] dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.04] transition-colors"
+          className="w-full flex items-center space-x-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#64635D] dark:text-[#A8A7A0] hover:text-[#1A1917] dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.04] transition-colors"
         >
           <HelpCircle className="w-4 h-4 text-[#7A7973]" />
           <span>Languages & Tone</span>

@@ -14,17 +14,19 @@ const DEFAULT_PREFERENCES: AppPreferences = {
   translateMode: false,
   hinglishMode: false,
   soundEffects: true,
-  apiProvider: 'huggingface',
+  apiProvider: 'groq',
   hfToken: process.env.HF_TOKEN || '',
   hfModel: 'openai/whisper-large-v3-turbo',
-  groqApiKey: '',
-  openaiApiKey: '',
+  groqApiKey: process.env.GROQ_API_KEY || '',
+  openaiApiKey: process.env.OPENAI_API_KEY || '',
   noiseReduction: 'normal',
   hinglishScript: 'roman',
   debugMode: false,
   hfFallbackModels: ['openai/whisper-large-v3-turbo', 'openai/whisper-large-v3'],
   customWindowPosition: null,
   userName: '',
+  hasCompletedOnboarding: false,
+  smartStructuring: true,
 };
 
 export class StorageService {
@@ -62,7 +64,12 @@ export class StorageService {
         if (!prefs.hfToken && process.env.HF_TOKEN) {
           prefs.hfToken = process.env.HF_TOKEN;
         }
-        prefs.apiProvider = 'huggingface';
+        if (!prefs.groqApiKey && process.env.GROQ_API_KEY) {
+          prefs.groqApiKey = process.env.GROQ_API_KEY;
+        }
+        if (!prefs.apiProvider) {
+          prefs.apiProvider = prefs.groqApiKey ? 'groq' : prefs.openaiApiKey ? 'openai' : prefs.hfToken ? 'huggingface' : 'groq';
+        }
         return {
           preferences: prefs,
           history: parsed.history || this.getInitialHistory(),

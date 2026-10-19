@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { Sidebar } from '../components/Sidebar';
 import { SettingsModal } from '../components/SettingsModal';
+import { OnboardingModal } from '../components/OnboardingModal';
 import { OpenWisprLogo } from '../components/OpenWisprLogo';
 import {
   Search,
@@ -50,7 +51,13 @@ export const HubWindow: React.FC = () => {
   }, [fetchInitialState]);
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [nameInput, setNameInput] = useState('');
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+
+  useEffect(() => {
+    if (!preferences.hasCompletedOnboarding && !preferences.groqApiKey && !preferences.openaiApiKey && !preferences.hfToken) {
+      setIsOnboardingOpen(true);
+    }
+  }, [preferences.hasCompletedOnboarding, preferences.groqApiKey, preferences.openaiApiKey, preferences.hfToken]);
 
   // Dictionary state
   const [newWord, setNewWord] = useState('');
@@ -217,6 +224,18 @@ export const HubWindow: React.FC = () => {
     return { streak, isBroken: false };
   }, [history]);
 
+  // 4. Dynamic Total Days Active Counter
+  const totalDaysActive = useMemo(() => {
+    if (history.length === 0) return 0;
+    const uniqueDays = new Set(
+      history.map((h) => {
+        const d = new Date(h.createdAt);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      })
+    );
+    return uniqueDays.size;
+  }, [history]);
+
   const filteredHistory = history.filter((h) =>
     h.text.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -232,12 +251,55 @@ export const HubWindow: React.FC = () => {
         {activeTab === 'dictation' && (
           <div className="p-8 max-w-6xl w-full mx-auto space-y-6">
             {/* Top Greeting */}
-            <div className="flex items-center space-x-2 text-xl font-bold text-[#1A1917] dark:text-white">
-              <span>Get back into the flow with</span>
-              <span className="px-2.5 py-0.5 rounded-lg border border-[#F59E0B]/50 bg-[#F59E0B]/15 text-[#B45309] dark:text-amber-400 font-mono text-sm font-bold shadow-sm">
-                {preferences.shortcutDictation || 'Caps Lock'}
-              </span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-xl font-bold text-[#1A1917] dark:text-white">
+                <span>{preferences.userName ? `Welcome back, ${preferences.userName}!` : 'Get back into the flow with'}</span>
+                <span className="px-2.5 py-0.5 rounded-lg border border-[#F59E0B]/50 bg-[#F59E0B]/15 text-[#B45309] dark:text-amber-400 font-mono text-sm font-bold shadow-sm">
+                  {preferences.shortcutDictation || 'Caps Lock'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsOnboardingOpen(true)}
+                className="px-3.5 py-1.5 rounded-xl border border-[#E5E4DE] dark:border-white/10 bg-white dark:bg-[#22211E] text-xs font-bold hover:border-amber-500/50 transition-all flex items-center gap-1.5 text-[#1A1917] dark:text-white shadow-sm cursor-pointer"
+              >
+                <Sparkles size={13} className="text-amber-500" />
+                <span>Setup Wizard</span>
+              </button>
             </div>
+
+            {/* Fast-Track Engine Setup Banner */}
+            {!preferences.groqApiKey && !preferences.openaiApiKey && !preferences.hfToken && (
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-[#1A1917] dark:text-white shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center text-white shrink-0">
+                    <Sparkles size={16} />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold">Connect AI Speech Engine (Free & Instant)</div>
+                    <div className="text-xs text-[#717069] dark:text-[#A8A7A0]">
+                      Add your free Groq API key for 0.2s ultra-fast speech dictation with perfect Hindi, Hinglish & English support.
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsOnboardingOpen(true)}
+                    className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer shadow-sm"
+                  >
+                    Quick Setup Guide
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openSettings('ai')}
+                    className="px-3 py-2 bg-white dark:bg-[#282724] border border-[#E5E4DE] dark:border-white/10 text-[#1A1917] dark:text-white hover:bg-zinc-50 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer shadow-sm"
+                  >
+                    Settings
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Two Column Grid */}
             <div className="grid grid-cols-10 gap-6">
@@ -431,6 +493,13 @@ export const HubWindow: React.FC = () => {
                         <div className="text-xs text-[#717069] dark:text-[#A8A7A0] font-medium">consistency</div>
                       </div>
                     )}
+                  </div>
+
+                  <div className="border-t border-[#E5E4DE]/60 dark:border-white/10 pt-3">
+                    <div className="text-xl font-bold text-[#1A1917] dark:text-white tracking-tight">
+                      {totalDaysActive} <span className="text-xs font-normal text-[#717069] dark:text-[#A8A7A0]">days</span>
+                    </div>
+                    <div className="text-xs text-[#717069] dark:text-[#A8A7A0] font-medium">days active</div>
                   </div>
                 </div>
 
@@ -695,44 +764,8 @@ export const HubWindow: React.FC = () => {
         )}
       </main>
 
-      {/* 3. First-Time User Name Setup Modal */}
-      {!preferences.userName && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-96 bg-white dark:bg-[#22211E] rounded-2xl p-6 shadow-2xl border border-[#E5E4DE] dark:border-white/10 space-y-4">
-            <div className="flex items-center space-x-2.5">
-              <OpenWisprLogo size={28} />
-              <h3 className="font-bold text-lg text-[#1A1917] dark:text-white">Welcome to Open Wispr</h3>
-            </div>
-            <p className="text-xs text-[#717069] dark:text-[#A8A7A0] leading-relaxed">
-              What should we call you? Your name will appear on your dashboard greeting and is stored strictly on your local PC.
-            </p>
-            <input
-              type="text"
-              placeholder="Enter your name..."
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5E4DE] dark:border-white/10 bg-[#F8F8F6] dark:bg-[#181816] text-xs text-[#1A1917] dark:text-white outline-none focus:border-amber-500"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && nameInput.trim()) {
-                  updatePreferences({ userName: nameInput.trim() });
-                }
-              }}
-            />
-            <button
-              onClick={() => {
-                if (nameInput.trim()) {
-                  updatePreferences({ userName: nameInput.trim() });
-                }
-              }}
-              disabled={!nameInput.trim()}
-              className="w-full py-2.5 rounded-xl bg-[#1A1917] dark:bg-white text-white dark:text-[#1A1917] text-xs font-bold transition-all disabled:opacity-40 shadow-sm"
-            >
-              Continue to Dashboard
-            </button>
-          </div>
-        </div>
-      )}
+      {/* 3. Interactive First-Time Setup & Onboarding Wizard */}
+      <OnboardingModal isOpen={isOnboardingOpen} onClose={() => setIsOnboardingOpen(false)} />
 
       {/* 4. Settings Dialog */}
       <SettingsModal />

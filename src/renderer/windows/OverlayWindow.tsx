@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { audioRecorder } from '../services/audioRecorder';
 import { soundEffects } from '../services/soundEffects';
-import { GripVertical, Check, Mic, AlertCircle, Loader2 } from 'lucide-react';
-import { OpenWisprLogo } from '../components/OpenWisprLogo';
+import { GripVertical, Check, Mic, AlertCircle, Loader2, Sparkles } from 'lucide-react';
 import { BRANDING } from '../../shared/branding';
 
 type OverlayState = 'idle' | 'recording' | 'transcribing' | 'done' | 'error';
@@ -16,17 +15,20 @@ export const OverlayWindow: React.FC = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Warm up microphone stream and pre-roll buffer immediately
+    // Warm up audio stream and pre-roll ring buffer immediately
     audioRecorder.initWarmup().catch(() => {});
 
     if (!window.electron?.ipc) return;
 
     // Load initial hotkey configuration
-    window.electron.ipc.invoke('zubridge:get-state', 'preferences').then((prefs: any) => {
-      if (prefs?.shortcutDictation) {
-        setShortcutName(prefs.shortcutDictation);
-      }
-    }).catch(() => {});
+    window.electron.ipc
+      .invoke('zubridge:get-state', 'preferences')
+      .then((prefs: any) => {
+        if (prefs?.shortcutDictation) {
+          setShortcutName(prefs.shortcutDictation);
+        }
+      })
+      .catch(() => {});
 
     const subPrefs = window.electron.ipc.on('preferences:updated', (prefs: any) => {
       if (prefs?.shortcutDictation) {
@@ -37,10 +39,10 @@ export const OverlayWindow: React.FC = () => {
     const subErrorMsg = window.electron.ipc.on('overlay:error-message', (msg: string) => {
       setErrorMessage(msg);
       setState('error');
-      setTimeout(() => setState('idle'), 2500);
+      setTimeout(() => setState('idle'), 3000);
     });
 
-    // Listen for mic-start triggered by low-level hotkey (Caps Lock / Ctrl)
+    // Listen for mic-start triggered by low-level hotkey
     const subMicStart = window.electron.ipc.on('dictation:mic-start', async () => {
       setState('recording');
       setDuration(0);
@@ -76,14 +78,13 @@ export const OverlayWindow: React.FC = () => {
       try {
         const { wavBuffer, rawWavBuffer, hasSpeech } = await audioRecorder.stop();
         if (!hasSpeech || wavBuffer.byteLength < 44 + 3200) {
-          // Pure silence or less than 0.1s of audio recorded
           setState('error');
           setErrorMessage('Speech too short');
           setTimeout(() => setState('idle'), 1200);
           return;
         }
 
-        // Send processed & raw audio buffer to backend for transcription, debugging & automatic pasting
+        // Send audio to backend
         await window.electron.ipc.invoke('dictation:process-audio', {
           audioBuffer: wavBuffer,
           rawBuffer: rawWavBuffer,
@@ -94,7 +95,7 @@ export const OverlayWindow: React.FC = () => {
         console.error('[Overlay] Transcription error:', err);
         setState('error');
         setErrorMessage(err.message || 'Transcription failed');
-        setTimeout(() => setState('idle'), 2000);
+        setTimeout(() => setState('idle'), 3000);
       }
     });
 
@@ -143,23 +144,26 @@ export const OverlayWindow: React.FC = () => {
       style={{ ...({ WebkitAppRegion: 'drag' } as any) }}
     >
       <div
-        className="flex items-center gap-3 px-3.5 py-2 rounded-full bg-[#141412]/96 backdrop-blur-xl border border-white/15 shadow-[0_12px_36px_rgba(0,0,0,0.6)] transition-all duration-200 cursor-move"
-        style={{ minWidth: 280, height: 44, ...({ WebkitAppRegion: 'drag' } as any) }}
-        title="Click and drag anywhere to move this Flow Bar"
+        className="flex items-center gap-3 px-3.5 py-1.5 rounded-full bg-[#121210]/95 backdrop-blur-2xl border border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.65)] transition-all duration-200 cursor-move"
+        style={{ minWidth: 260, height: 42, ...({ WebkitAppRegion: 'drag' } as any) }}
+        title="Wispr Flow Bar (Click and drag to reposition)"
       >
         {/* Drag handle */}
-        <div className="text-[#64635D] hover:text-[#D5D4CE] transition-colors p-0.5 shrink-0" style={{ ...({ WebkitAppRegion: 'drag' } as any) }}>
-          <GripVertical size={14} />
+        <div
+          className="text-[#55544E] hover:text-[#D5D4CE] transition-colors p-0.5 shrink-0"
+          style={{ ...({ WebkitAppRegion: 'drag' } as any) }}
+        >
+          <GripVertical size={13} />
         </div>
 
         {/* State 1: IDLE */}
         {state === 'idle' && (
           <div className="flex items-center gap-2.5 text-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)] animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)] animate-pulse" />
             <span className="font-semibold text-white tracking-tight text-xs">
               {BRANDING.appName}
             </span>
-            <span className="text-[#55544E]">|</span>
+            <span className="text-[#44433E]">|</span>
             <div className="flex items-center gap-1.5 text-[#A8A7A0] text-[11px]">
               <span>Hold</span>
               <span className="px-1.5 py-0.5 rounded bg-white/10 text-white font-mono text-[10px] font-bold border border-white/10">
@@ -178,12 +182,12 @@ export const OverlayWindow: React.FC = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
               </span>
-              <span className="font-mono text-xs font-bold text-white">
+              <span className="font-mono text-xs font-bold text-white tracking-wider">
                 {formatDuration(duration)}
               </span>
             </div>
 
-            {/* Elongated live 16-band RMS Audio Spectrum */}
+            {/* Dynamic 16-band live Audio Spectrum */}
             <div className="flex items-center gap-[3px] h-6 px-1">
               {levels.map((lvl, idx) => {
                 const heightPx = Math.max(3, Math.round(lvl * 24));
@@ -194,7 +198,9 @@ export const OverlayWindow: React.FC = () => {
                     className="w-[2.5px] rounded-full transition-all duration-75"
                     style={{
                       height: `${heightPx}px`,
-                      backgroundColor: isSpeaking ? '#F59E0B' : '#52514B',
+                      background: isSpeaking
+                        ? 'linear-gradient(to top, #F59E0B, #FBBF24)'
+                        : '#45443F',
                     }}
                   />
                 );
@@ -206,7 +212,7 @@ export const OverlayWindow: React.FC = () => {
         {/* State 3: TRANSCRIBING */}
         {state === 'transcribing' && (
           <div className="flex items-center gap-2.5 text-xs text-amber-300">
-            <Loader2 size={15} className="animate-spin text-amber-400" />
+            <Loader2 size={14} className="animate-spin text-amber-400" />
             <span className="font-medium text-white text-xs">Transcribing...</span>
             <div className="flex gap-1 ml-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -228,9 +234,9 @@ export const OverlayWindow: React.FC = () => {
 
         {/* State 5: ERROR */}
         {state === 'error' && (
-          <div className="flex items-center gap-2 text-xs font-medium text-rose-400">
-            <AlertCircle size={14} />
-            <span>{errorMessage || 'Error'}</span>
+          <div className="flex items-center gap-2 text-xs font-medium text-rose-400 max-w-[320px] truncate">
+            <AlertCircle size={14} className="shrink-0" />
+            <span className="truncate">{errorMessage || 'Error'}</span>
           </div>
         )}
       </div>

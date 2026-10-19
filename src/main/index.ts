@@ -39,6 +39,16 @@ class OpenWisprApp {
       return;
     }
 
+    // Security & Anti-Tamper hardening: Terminate if external debuggers/inspectors are attached
+    if (app.isPackaged) {
+      const suspiciousArgs = ['--remote-debugging-port', '--inspect', '--inspect-brk', '--allow-http-screen-capture', '--disable-web-security'];
+      if (process.argv.some((arg) => suspiciousArgs.some((flag) => arg.includes(flag)))) {
+        console.warn('[Security] Unauthorized debugging injection detected. Terminating.');
+        app.quit();
+        return;
+      }
+    }
+
     app.on('second-instance', () => {
       this.windowManager.createHubWindow();
     });

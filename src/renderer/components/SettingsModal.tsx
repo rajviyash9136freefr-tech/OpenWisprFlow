@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import {
   X,
@@ -9,8 +9,14 @@ import {
   Moon,
   Keyboard,
   RotateCcw,
-  Trash2,
-  Check,
+  Cpu,
+  Key,
+  ExternalLink,
+  Zap,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Sparkles,
 } from 'lucide-react';
 import { BRANDING } from '../../shared/branding';
 
@@ -24,7 +30,9 @@ export const SettingsModal: React.FC = () => {
     updatePreferences,
   } = useStore();
 
-  const [isRecordingKey, setIsRecordingKey] = React.useState(false);
+  const [isRecordingKey, setIsRecordingKey] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string; latencyMs?: number } | null>(null);
 
   React.useEffect(() => {
     if (!isRecordingKey) return;
@@ -55,6 +63,23 @@ export const SettingsModal: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isRecordingKey, updatePreferences]);
 
+  const handleTestConnection = async () => {
+    setIsTesting(true);
+    setTestResult(null);
+    try {
+      if (window.electron?.ipc) {
+        const res = await window.electron.ipc.invoke('api:test-connection', preferences);
+        setTestResult(res);
+      } else {
+        setTestResult({ success: true, message: 'Settings saved in browser preview.' });
+      }
+    } catch (err: any) {
+      setTestResult({ success: false, message: err.message || 'Connection test failed.' });
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   const getFriendlyKeyLabel = (id: string) => {
     if (!id || id === 'Caps Lock') return 'Caps Lock (Default)';
     if (id === 'Ctrl') return 'Single Ctrl (Hold)';
@@ -78,7 +103,7 @@ export const SettingsModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 font-sans select-none">
-      <div className="w-[780px] h-[540px] bg-white dark:bg-[#1C1B18] rounded-2xl shadow-2xl border border-[#E5E4DE] dark:border-white/10 flex overflow-hidden transition-colors">
+      <div className="w-[820px] h-[580px] bg-white dark:bg-[#1C1B18] rounded-2xl shadow-2xl border border-[#E5E4DE] dark:border-white/10 flex overflow-hidden transition-colors">
         {/* Left Settings Sidebar */}
         <div className="w-56 bg-[#F8F8F6] dark:bg-[#22211E] border-r border-[#E5E4DE] dark:border-white/10 p-3 flex flex-col justify-between">
           <div>
@@ -88,7 +113,8 @@ export const SettingsModal: React.FC = () => {
             <nav className="space-y-0.5 mt-1">
               {[
                 { id: 'general', label: 'General & Hotkeys', icon: Sliders },
-                { id: 'system', label: 'System & Appearance', icon: Monitor },
+                { id: 'ai', label: 'AI & Speech Engines', icon: Cpu },
+                { id: 'system', label: 'System & Audio', icon: Monitor },
                 { id: 'languages', label: 'Languages & Hinglish', icon: Globe },
               ].map((tab) => {
                 const Icon = tab.icon;
@@ -96,7 +122,10 @@ export const SettingsModal: React.FC = () => {
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => openSettings(tab.id as any)}
+                    onClick={() => {
+                      openSettings(tab.id as any);
+                      setTestResult(null);
+                    }}
                     className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                       isActive
                         ? 'bg-white dark:bg-[#2A2925] text-[#1A1917] dark:text-[#F2F1ED] shadow-sm shadow-black/5 font-bold'
@@ -121,7 +150,13 @@ export const SettingsModal: React.FC = () => {
           {/* Header */}
           <div className="h-14 px-6 border-b border-[#E5E4DE] dark:border-white/10 flex items-center justify-between">
             <h2 className="text-base font-bold text-[#1A1917] dark:text-white capitalize">
-              {settingsTab === 'system' ? 'System & Appearance' : settingsTab === 'languages' ? 'Languages & Hinglish' : 'General & Hotkeys'}
+              {settingsTab === 'system'
+                ? 'System & Audio'
+                : settingsTab === 'languages'
+                ? 'Languages & Hinglish'
+                : settingsTab === 'ai'
+                ? 'AI & Speech Engines'
+                : 'General & Hotkeys'}
             </h2>
             <button
               onClick={closeSettings}
@@ -238,7 +273,7 @@ export const SettingsModal: React.FC = () => {
                     </div>
 
                     <p className="text-[11px] text-[#717069] dark:text-[#A8A7A0]">
-                      Click "Record" and press any key to bind it. If a custom key causes errors or doesn't work on your keyboard, click "Reset to Caps Lock" to immediately restore the default.
+                      Click "Record" and press any key to bind it.
                     </p>
                   </div>
                 </div>
@@ -274,7 +309,223 @@ export const SettingsModal: React.FC = () => {
               </div>
             )}
 
-            {/* 2. SYSTEM & APPEARANCE TAB */}
+            {/* 2. AI & SPEECH ENGINES TAB */}
+            {settingsTab === 'ai' && (
+              <div className="space-y-5">
+                {/* Engine Selector */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-xs font-bold text-[#1A1917] dark:text-white">Transcription Engine</label>
+                      <p className="text-xs text-[#717069] dark:text-[#A8A7A0]">
+                        Select which speech-to-text service powers dictation across all your apps.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5 pt-1">
+                    {[
+                      {
+                        id: 'groq',
+                        title: 'Groq Cloud (Recommended)',
+                        desc: '0.2s ultra-fast Whisper Large v3 Turbo. Free 14,400 req/day.',
+                        badge: 'Fastest & Free',
+                      },
+                      {
+                        id: 'openai',
+                        title: 'OpenAI Whisper',
+                        desc: 'Official OpenAI cloud transcription using whisper-1 model.',
+                        badge: 'Cloud',
+                      },
+                      {
+                        id: 'huggingface',
+                        title: 'Hugging Face Inference',
+                        desc: 'Serverless inference router using personal HF token.',
+                        badge: 'Cloud',
+                      },
+                      {
+                        id: 'local',
+                        title: 'Local CUDA GPU Whisper',
+                        desc: 'Zero-cloud offline inference via Python/CUDA daemon.',
+                        badge: 'Offline',
+                      },
+                    ].map((engine) => (
+                      <button
+                        key={engine.id}
+                        onClick={() => {
+                          updatePreferences({ apiProvider: engine.id as any });
+                          setTestResult(null);
+                        }}
+                        className={`text-left p-3 rounded-xl border transition-all ${
+                          (preferences.apiProvider || 'groq') === engine.id
+                            ? 'border-amber-500 bg-amber-500/10 text-amber-900 dark:text-amber-400 font-bold ring-1 ring-amber-500/30'
+                            : 'border-[#E5E4DE] dark:border-white/10 bg-white dark:bg-[#252420] text-[#64635D] dark:text-[#A8A7A0] hover:bg-black/[0.02] dark:hover:bg-white/[0.03]'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-bold text-[#1A1917] dark:text-white">{engine.title}</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 text-[#717069] dark:text-[#A8A7A0] font-mono">
+                            {engine.badge}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#717069] dark:text-[#A8A7A0] font-normal leading-relaxed">
+                          {engine.desc}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Groq Key Configuration */}
+                {(preferences.apiProvider === 'groq' || !preferences.apiProvider) && (
+                  <div className="p-4 bg-[#F8F8F6] dark:bg-[#252420] border border-[#E5E4DE] dark:border-white/10 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Key size={14} className="text-amber-500" />
+                        <span className="text-xs font-bold text-[#1A1917] dark:text-white">Groq API Key</span>
+                      </div>
+                      <a
+                        href="https://console.groq.com/keys"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 hover:underline font-semibold"
+                      >
+                        <span>Get Free Key (Instant, 10s signup)</span>
+                        <ExternalLink size={11} />
+                      </a>
+                    </div>
+                    <input
+                      type="password"
+                      placeholder="Paste your Groq API key here (gsk_...)"
+                      value={preferences.groqApiKey || ''}
+                      onChange={(e) => updatePreferences({ groqApiKey: e.target.value.trim() })}
+                      className="w-full px-3 py-2 bg-white dark:bg-[#1C1B18] border border-[#E5E4DE] dark:border-white/10 rounded-xl text-xs text-[#1A1917] dark:text-white font-mono outline-none focus:border-amber-500"
+                    />
+                    <p className="text-[11px] text-[#717069] dark:text-[#A8A7A0]">
+                      Groq transcribes full 60-second long sentences in ~200ms with Whisper Large v3 Turbo. Free tier includes 14,400 requests per day with zero billing.
+                    </p>
+                  </div>
+                )}
+
+                {/* OpenAI Key Configuration */}
+                {preferences.apiProvider === 'openai' && (
+                  <div className="p-4 bg-[#F8F8F6] dark:bg-[#252420] border border-[#E5E4DE] dark:border-white/10 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Key size={14} className="text-amber-500" />
+                        <span className="text-xs font-bold text-[#1A1917] dark:text-white">OpenAI API Key</span>
+                      </div>
+                      <a
+                        href="https://platform.openai.com/api-keys"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 hover:underline font-semibold"
+                      >
+                        <span>Get OpenAI Key</span>
+                        <ExternalLink size={11} />
+                      </a>
+                    </div>
+                    <input
+                      type="password"
+                      placeholder="Paste your OpenAI API key (sk-...)"
+                      value={preferences.openaiApiKey || ''}
+                      onChange={(e) => updatePreferences({ openaiApiKey: e.target.value.trim() })}
+                      className="w-full px-3 py-2 bg-white dark:bg-[#1C1B18] border border-[#E5E4DE] dark:border-white/10 rounded-xl text-xs text-[#1A1917] dark:text-white font-mono outline-none focus:border-amber-500"
+                    />
+                  </div>
+                )}
+
+                {/* Hugging Face Token Configuration */}
+                {preferences.apiProvider === 'huggingface' && (
+                  <div className="p-4 bg-[#F8F8F6] dark:bg-[#252420] border border-[#E5E4DE] dark:border-white/10 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Key size={14} className="text-amber-500" />
+                        <span className="text-xs font-bold text-[#1A1917] dark:text-white">Hugging Face User Access Token</span>
+                      </div>
+                      <a
+                        href="https://huggingface.co/settings/tokens"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 hover:underline font-semibold"
+                      >
+                        <span>Create Token</span>
+                        <ExternalLink size={11} />
+                      </a>
+                    </div>
+                    <input
+                      type="password"
+                      placeholder="Paste your Hugging Face token (hf_...)"
+                      value={preferences.hfToken || ''}
+                      onChange={(e) => updatePreferences({ hfToken: e.target.value.trim() })}
+                      className="w-full px-3 py-2 bg-white dark:bg-[#1C1B18] border border-[#E5E4DE] dark:border-white/10 rounded-xl text-xs text-[#1A1917] dark:text-white font-mono outline-none focus:border-amber-500"
+                    />
+                  </div>
+                )}
+
+                {/* Local Daemon status */}
+                {preferences.apiProvider === 'local' && (
+                  <div className="p-4 bg-[#F8F8F6] dark:bg-[#252420] border border-[#E5E4DE] dark:border-white/10 rounded-xl space-y-2">
+                    <span className="text-xs font-bold text-[#1A1917] dark:text-white">Local Python Daemon</span>
+                    <p className="text-[11px] text-[#717069] dark:text-[#A8A7A0]">
+                      Runs whisper on your local NVIDIA GPU via `whisper_daemon.py`. Requires PyTorch and CUDA.
+                    </p>
+                  </div>
+                )}
+
+                {/* Smart Auto-Structuring Toggle */}
+                <div className="p-4 bg-[#F8F8F6] dark:bg-[#252420] border border-[#E5E4DE] dark:border-white/10 rounded-xl flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-[#1A1917] dark:text-white flex items-center gap-2">
+                      <Sparkles size={14} className="text-amber-500" />
+                      <span>Wispr Smart Auto-Structuring</span>
+                    </div>
+                    <div className="text-xs text-[#717069] dark:text-[#A8A7A0]">
+                      Automatically format long speech into bullet points, numbered lists, and clean paragraphs.
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={preferences.smartStructuring !== false}
+                    onChange={(e) => updatePreferences({ smartStructuring: e.target.checked })}
+                    className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
+                  />
+                </div>
+
+                {/* Test Connection Button & Status */}
+                <div className="border-t border-[#E5E4DE] dark:border-white/10 pt-4 flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-bold text-[#1A1917] dark:text-white">Verify Connection</div>
+                    <div className="text-xs text-[#717069] dark:text-[#A8A7A0]">
+                      Ping the selected provider to verify keys, permissions, and network latency.
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleTestConnection}
+                    disabled={isTesting}
+                    className="flex items-center space-x-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 cursor-pointer shadow-sm"
+                  >
+                    {isTesting ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
+                    <span>{isTesting ? 'Testing...' : 'Test Connection'}</span>
+                  </button>
+                </div>
+
+                {testResult && (
+                  <div
+                    className={`p-3 rounded-xl border text-xs flex items-center gap-2 ${
+                      testResult.success
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-400'
+                        : 'bg-rose-500/10 border-rose-500/30 text-rose-800 dark:text-rose-400'
+                    }`}
+                  >
+                    {testResult.success ? <CheckCircle2 size={16} className="shrink-0" /> : <AlertCircle size={16} className="shrink-0" />}
+                    <span className="font-medium">{testResult.message}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 3. SYSTEM & AUDIO TAB */}
             {settingsTab === 'system' && (
               <div className="space-y-5">
                 {/* Dark Mode / Light Mode Toggle */}
@@ -350,22 +601,6 @@ export const SettingsModal: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Whisper Model Selection */}
-                <div className="space-y-1.5 border-t border-[#E5E4DE] dark:border-white/10 pt-4">
-                  <label className="text-xs font-bold text-[#1A1917] dark:text-white">Whisper Speech-to-Text Model</label>
-                  <p className="text-xs text-[#717069] dark:text-[#A8A7A0]">
-                    Select the primary Whisper-family inference model.
-                  </p>
-                  <select
-                    value={preferences.hfModel || 'openai/whisper-large-v3-turbo'}
-                    onChange={(e) => updatePreferences({ hfModel: e.target.value })}
-                    className="w-full px-3 py-2 bg-white dark:bg-[#252420] border border-[#E5E4DE] dark:border-white/10 rounded-xl text-xs outline-none focus:border-amber-500 text-[#1A1917] dark:text-white"
-                  >
-                    <option value="openai/whisper-large-v3-turbo">openai/whisper-large-v3-turbo (Recommended - Ultra-fast & accurate)</option>
-                    <option value="openai/whisper-large-v3">openai/whisper-large-v3 (Comprehensive Whisper large)</option>
-                  </select>
-                </div>
-
                 {/* Debug Diagnostics Mode Toggle */}
                 <div className="flex items-center justify-between border-t border-[#E5E4DE] dark:border-white/10 pt-4">
                   <div>
@@ -383,8 +618,6 @@ export const SettingsModal: React.FC = () => {
                 </div>
               </div>
             )}
-
-
 
             {/* 4. LANGUAGES & HINGLISH TAB */}
             {settingsTab === 'languages' && (
@@ -464,7 +697,7 @@ export const SettingsModal: React.FC = () => {
           <div className="h-14 px-6 border-t border-[#E5E4DE] dark:border-white/10 bg-[#F8F8F6] dark:bg-[#22211E] flex items-center justify-end">
             <button
               onClick={closeSettings}
-              className="px-5 py-2 bg-[#1A1917] dark:bg-white text-white dark:text-[#1A1917] hover:bg-black text-xs font-bold rounded-xl shadow-sm transition-all"
+              className="px-5 py-2 bg-[#1A1917] dark:bg-white text-white dark:text-[#1A1917] hover:bg-black text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer"
             >
               Done
             </button>

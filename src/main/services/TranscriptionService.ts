@@ -11,14 +11,16 @@ export class TranscriptionService {
   }
 
   /**
-   * Silence-aware splitting for long audio recordings (> 25-30s)
+   * High-accuracy silence-aware splitting only for very long recordings (> 75-90 seconds)
+   * Shorter recordings are never sliced to preserve natural context, grammar, and sentence flow.
    */
-  private splitWavAtSilence(audioBuffer: Buffer, targetSeconds = 22, overlapSeconds = 0.5): Buffer[] {
+  private splitWavAtSilence(audioBuffer: Buffer, targetSeconds = 60, overlapSeconds = 0.5): Buffer[] {
     const bytesPerSecond = 32000; // 16kHz 16-bit Mono = 32,000 bytes/sec
     const totalBytes = audioBuffer.length - 44;
     const totalSeconds = totalBytes / bytesPerSecond;
 
-    if (totalSeconds <= 26) {
+    // Up to 75 seconds: ALWAYS process as a single unbroken audio stream!
+    if (totalSeconds <= 75) {
       return [audioBuffer];
     }
 
@@ -30,7 +32,7 @@ export class TranscriptionService {
       const remainingBytes = pcm.length - currentStart;
       const targetChunkBytes = Math.min(remainingBytes, targetSeconds * bytesPerSecond);
 
-      if (remainingBytes <= (targetSeconds + 6) * bytesPerSecond) {
+      if (remainingBytes <= (targetSeconds + 15) * bytesPerSecond) {
         // Last chunk, take all remaining
         const slice = pcm.subarray(currentStart);
         if (slice.length >= 3200) {
@@ -39,14 +41,14 @@ export class TranscriptionService {
         break;
       }
 
-      // Search for energy minimum in the window [targetSeconds - 4, targetSeconds + 3]
-      const searchStart = currentStart + Math.max(0, (targetSeconds - 4) * bytesPerSecond);
-      const searchEnd = currentStart + Math.min(remainingBytes, (targetSeconds + 3) * bytesPerSecond);
+      // Search for energy minimum in the window [targetSeconds - 8, targetSeconds + 8]
+      const searchStart = currentStart + Math.max(0, (targetSeconds - 8) * bytesPerSecond);
+      const searchEnd = currentStart + Math.min(remainingBytes, (targetSeconds + 8) * bytesPerSecond);
 
       let minEnergy = Infinity;
       let bestSplit = currentStart + targetChunkBytes;
 
-      const windowStep = 320; // 10ms step (160 samples = 320 bytes)
+      const windowStep = 320; // 10ms step
       for (let pos = searchStart; pos < searchEnd - windowStep; pos += windowStep) {
         let energy = 0;
         for (let i = 0; i < windowStep; i += 2) {
@@ -64,9 +66,9 @@ export class TranscriptionService {
         chunks.push(this.wrapPcmInWav(chunkData));
       }
 
-      // Move forward with overlap
+      // Move forward with slight overlap
       const overlapBytes = Math.round(overlapSeconds * bytesPerSecond);
-      currentStart = Math.max(currentStart + targetSeconds * bytesPerSecond / 2, bestSplit - overlapBytes);
+      currentStart = Math.max(currentStart + (targetSeconds * bytesPerSecond) / 2, bestSplit - overlapBytes);
     }
 
     return chunks.length > 0 ? chunks : [audioBuffer];
@@ -94,13 +96,16 @@ export class TranscriptionService {
   }
 
   /**
-   * Filters common Whisper silence hallucinations and phantom loops
+   * Filters common Whisper silence hallucinations, prompt echoes, and phantom loops
    */
   private filterHallucinations(text: string): string {
     if (!text) return '';
     let trimmed = text.trim();
 
-    // 1. Detect and collapse repetitive phrase loops (e.g. "mera naam kartik hai mera naam kartik hai...")
+    // 0. Filter prompt leakage echoes (e.g. "clear voice", "this is a clear voice", "and then, this is a clear voice")
+    trimmed = trimmed.replace(/\b(?:and\s+then\s*,\s*)?(?:there\s+is\s+a\s+|this\s+is\s+a\s+)?clear\s+voice(?:\s+dictation)?(?:\s*,\s*and\s+then|\s*,\s*to\s+be\s+honest)?\b[.,!]*/gi, '').trim();
+
+    // 1. Detect and collapse repetitive phrase loops
     const words = trimmed.split(/\s+/);
     if (words.length >= 6) {
       for (let phraseLen = 2; phraseLen <= 8; phraseLen++) {
@@ -136,6 +141,10 @@ export class TranscriptionService {
       /^bye[.!]*$/i,
       /^\.+$/,
       /^[,\s.!?-]+$/,
+      /^(?:hello,\s*)?this is a clear voice dictation[.!]*$/i,
+      /^clear voice[.!]*$/i,
+      /^to be honest[.!]*$/i,
+      /^and,\s*there is a clear voice[.!]*$/i,
     ];
 
     for (const pat of hallucinations) {
@@ -163,9 +172,9 @@ export class TranscriptionService {
       const prevWords = merged.split(/\s+/);
       const nextWords = next.split(/\s+/);
 
-      // Check for overlap of 1 to 4 words
+      // Check for overlap of 1 to 5 words
       let overlapCount = 0;
-      const maxCheck = Math.min(4, prevWords.length, nextWords.length);
+      const maxCheck = Math.min(5, prevWords.length, nextWords.length);
 
       for (let len = maxCheck; len >= 1; len--) {
         const prevTail = prevWords.slice(-len).join(' ').toLowerCase().replace(/[.,!?;:]/g, '');
@@ -188,117 +197,126 @@ export class TranscriptionService {
   }
 
   /**
-   * Transcribes a single audio chunk with automatic retry, exponential backoff, and model fallbacks
+   * Transcribes a single audio chunk with intelligent provider routing and zero deadlocks
    */
   private async transcribeChunk(
     chunkBuffer: Buffer,
     prefs: AppPreferences,
     promptHint?: string
   ): Promise<{ text: string; provider: string; rawResponse?: any }> {
-    const effectiveToken = prefs.hfToken || process.env.HF_TOKEN || '';
+    const groqKey = prefs.groqApiKey || process.env.GROQ_API_KEY || '';
+    const oaiKey = prefs.openaiApiKey || process.env.OPENAI_API_KEY || '';
+    const hfToken = prefs.hfToken || process.env.HF_TOKEN || '';
+    const preferredProvider = prefs.apiProvider || (groqKey ? 'groq' : oaiKey ? 'openai' : hfToken ? 'huggingface' : 'groq');
     const task = prefs.translateMode ? 'translate' : 'transcribe';
-    const primaryModel = prefs.hfModel || 'openai/whisper-large-v3-turbo';
-    const fallbackModels = prefs.hfFallbackModels || ['openai/whisper-large-v3-turbo', 'openai/whisper-large-v3'];
-    const modelCandidates = Array.from(new Set([primaryModel, ...fallbackModels]));
 
     let languageParam = prefs.language;
     if (languageParam === 'auto' || languageParam === 'universal' || !languageParam) {
       languageParam = undefined;
     }
 
-    // 1. Try Hugging Face Inference API if token provided
-    if (effectiveToken || prefs.apiProvider === 'huggingface') {
-      for (const model of modelCandidates) {
-        try {
-          console.log(`[TranscriptionService] Trying Hugging Face model: ${model}...`);
-          const hfRes = await this.callHuggingFaceWithRetry(chunkBuffer, effectiveToken, model, languageParam, task, promptHint);
-          if (hfRes && hfRes.text) {
-            const cleaned = this.filterHallucinations(hfRes.text);
-            return { text: cleaned, provider: `huggingface:${model}`, rawResponse: hfRes.raw };
-          }
-        } catch (hfErr: any) {
-          console.warn(`[TranscriptionService] HF model '${model}' failed:`, hfErr.message);
-        }
-      }
-    }
+    const errors: string[] = [];
 
-    // 2. High-Speed Local CUDA GPU Whisper Fallback (instant ~300ms, 100% offline accuracy)
-    if (this.localWhisper.getIsReady()) {
+    // Helper: Try Groq (Ultra-fast, ~150-250ms, flawless Hindi/Hinglish/English)
+    const tryGroq = async () => {
+      if (!groqKey) return null;
+      try {
+        console.log('[TranscriptionService] Transcribing via Groq Whisper Large v3 Turbo...');
+        const text = await this.transcribeGroq(chunkBuffer, groqKey, languageParam, prefs.translateMode, promptHint);
+        return { text: this.filterHallucinations(text), provider: 'groq:whisper-large-v3-turbo' };
+      } catch (err: any) {
+        console.warn('[TranscriptionService] Groq failed:', err.message);
+        errors.push(`Groq: ${err.message}`);
+        return null;
+      }
+    };
+
+    // Helper: Try OpenAI Whisper
+    const tryOpenAI = async () => {
+      if (!oaiKey) return null;
+      try {
+        console.log('[TranscriptionService] Transcribing via OpenAI Whisper-1...');
+        const text = await this.transcribeOpenAI(chunkBuffer, oaiKey, languageParam, prefs.translateMode, promptHint);
+        return { text: this.filterHallucinations(text), provider: 'openai:whisper-1' };
+      } catch (err: any) {
+        console.warn('[TranscriptionService] OpenAI failed:', err.message);
+        errors.push(`OpenAI: ${err.message}`);
+        return null;
+      }
+    };
+
+    // Helper: Try Local CUDA GPU Whisper
+    const tryLocal = async () => {
+      if (!this.localWhisper.getIsReady()) return null;
       try {
         console.log('[TranscriptionService] Transcribing via Local CUDA GPU Whisper...');
         const result = await this.localWhisper.transcribeBuffer(chunkBuffer, prefs.language || 'auto', task, promptHint);
         if (result && result.text) {
-          const cleaned = this.filterHallucinations(result.text);
-          return { text: cleaned, provider: 'local:cuda', rawResponse: result };
+          return { text: this.filterHallucinations(result.text), provider: 'local:cuda', rawResponse: result };
         }
       } catch (err: any) {
         console.warn('[TranscriptionService] Local CUDA Whisper failed:', err.message);
+        errors.push(`Local: ${err.message}`);
       }
-    }
+      return null;
+    };
 
-    // 3. Free Hugging Face Whisper Large v3 Space via Gradio (Zero cost, no credits needed, works on any PC!)
-    try {
-      console.log('[TranscriptionService] Trying Free Hugging Face Whisper Space...');
-      const spaceRes = await this.transcribeGradioSpace(chunkBuffer, task);
-      if (spaceRes && spaceRes.text) {
-        const cleaned = this.filterHallucinations(spaceRes.text);
-        if (cleaned) {
-          return { text: cleaned, provider: 'huggingface:space-whisper-v3', rawResponse: spaceRes };
+    // Helper: Try Hugging Face Inference API
+    const tryHuggingFace = async () => {
+      if (!hfToken) return null;
+      const model = prefs.hfModel || 'openai/whisper-large-v3-turbo';
+      try {
+        console.log(`[TranscriptionService] Trying Hugging Face (${model})...`);
+        const hfRes = await this.callHuggingFaceWithRetry(chunkBuffer, hfToken, model, languageParam, task, promptHint);
+        if (hfRes && hfRes.text) {
+          return { text: this.filterHallucinations(hfRes.text), provider: `huggingface:${model}`, rawResponse: hfRes.raw };
         }
-      }
-    } catch (spaceErr: any) {
-      console.warn('[TranscriptionService] Free HF Whisper Space error:', spaceErr.message);
-    }
-
-    // 4. Groq Fallback (Ultra-fast ~150ms if key configured)
-    if (prefs.groqApiKey) {
-      try {
-        const groqText = await this.transcribeGroq(chunkBuffer, prefs.groqApiKey, prefs.language, prefs.translateMode);
-        return { text: this.filterHallucinations(groqText), provider: 'groq:whisper-large-v3-turbo' };
       } catch (err: any) {
-        console.warn('[TranscriptionService] Groq failed:', err.message);
+        console.warn(`[TranscriptionService] HF model '${model}' failed:`, err.message);
+        errors.push(`HuggingFace: ${err.message}`);
       }
+      return null;
+    };
+
+    // 1. Try selected provider first
+    if (preferredProvider === 'groq') {
+      const res = await tryGroq();
+      if (res && res.text) return res;
+    } else if (preferredProvider === 'openai') {
+      const res = await tryOpenAI();
+      if (res && res.text) return res;
+    } else if (preferredProvider === 'local') {
+      const res = await tryLocal();
+      if (res && res.text) return res;
+    } else if (preferredProvider === 'huggingface') {
+      const res = await tryHuggingFace();
+      if (res && res.text) return res;
     }
 
-    // 5. OpenAI Fallback (if key configured)
-    if (prefs.openaiApiKey) {
-      try {
-        const oaiText = await this.transcribeOpenAI(chunkBuffer, prefs.openaiApiKey, prefs.language, prefs.translateMode);
-        return { text: this.filterHallucinations(oaiText), provider: 'openai:whisper-1' };
-      } catch (err: any) {
-        console.warn('[TranscriptionService] OpenAI failed:', err.message);
-      }
+    // 2. Cascade through available fallbacks in priority order
+    if (groqKey && preferredProvider !== 'groq') {
+      const res = await tryGroq();
+      if (res && res.text) return res;
+    }
+    if (oaiKey && preferredProvider !== 'openai') {
+      const res = await tryOpenAI();
+      if (res && res.text) return res;
+    }
+    if (this.localWhisper.getIsReady() && preferredProvider !== 'local') {
+      const res = await tryLocal();
+      if (res && res.text) return res;
+    }
+    if (hfToken && preferredProvider !== 'huggingface') {
+      const res = await tryHuggingFace();
+      if (res && res.text) return res;
     }
 
-    // 6. Final fallback to one-shot local Whisper
-    try {
-      const oneShot = await this.localWhisper.transcribeBuffer(chunkBuffer, prefs.language || 'auto', task, promptHint);
-      return { text: this.filterHallucinations(oneShot.text || ''), provider: 'local:oneshot' };
-    } catch (e: any) {
-      console.error('[TranscriptionService] All transcription providers exhausted:', e.message);
-      return { text: '', provider: 'none', rawResponse: { error: e.message } };
+    // 3. If no API keys were configured, give a clear, actionable error
+    if (!groqKey && !oaiKey && !hfToken && !this.localWhisper.getIsReady()) {
+      throw new Error('No API key configured. Open Settings -> AI & Engines to add your free Groq API key.');
     }
-  }
 
-  private gradioClient: any = null;
-
-  private async getGradioClient(): Promise<any> {
-    if (!this.gradioClient) {
-      const { Client } = await import('@gradio/client');
-      this.gradioClient = await Client.connect('hf-audio/whisper-large-v3');
-    }
-    return this.gradioClient;
-  }
-
-  private async transcribeGradioSpace(
-    audioBuffer: Buffer,
-    task: 'transcribe' | 'translate' = 'transcribe'
-  ): Promise<{ text: string }> {
-    const client = await this.getGradioClient();
-    const audioBlob = new Blob([new Uint8Array(audioBuffer)], { type: 'audio/wav' });
-    const result = await client.predict('/transcribe', [audioBlob, task]);
-    const rawText = Array.isArray(result?.data) ? result.data[0] : (result?.data || '');
-    return { text: typeof rawText === 'string' ? rawText.trim() : '' };
+    throw new Error(`Transcription failed across configured providers (${errors.join('; ')})`);
   }
 
   /**
@@ -311,7 +329,7 @@ export class TranscriptionService {
     language?: string,
     task: 'transcribe' | 'translate' = 'transcribe',
     prompt?: string,
-    maxRetries = 3
+    maxRetries = 2
   ): Promise<{ text: string; raw: any }> {
     const url = `https://router.huggingface.co/hf-inference/models/${model}`;
     let attempt = 0;
@@ -352,21 +370,20 @@ export class TranscriptionService {
         // Handle HTTP 503: Model Loading
         if (res.status === 503) {
           const body = (await res.json().catch(() => ({}))) as any;
-          const waitTime = Math.min(10, Math.max(2, body.estimated_time ? Math.round(body.estimated_time) : 3));
-          console.log(`[TranscriptionService] HF model '${model}' is loading. Waiting ${waitTime}s (attempt ${attempt}/${maxRetries})...`);
+          const waitTime = Math.min(8, Math.max(2, body.estimated_time ? Math.round(body.estimated_time) : 3));
+          console.log(`[TranscriptionService] HF model '${model}' is loading. Waiting ${waitTime}s...`);
           await new Promise((r) => setTimeout(r, waitTime * 1000));
           continue;
         }
 
         // Handle HTTP 429: Rate Limited
         if (res.status === 429) {
-          console.warn(`[TranscriptionService] HF rate limited (429). Backing off ${delay}ms...`);
+          console.warn(`[TranscriptionService] HF rate limited (429). Retrying in ${delay}ms...`);
           await new Promise((r) => setTimeout(r, delay));
           delay *= 2;
           continue;
         }
 
-        // Handle HTTP 402 or other client errors: abort retrying this endpoint
         const errText = await res.text();
         throw new Error(`HF HTTP ${res.status}: ${errText}`);
       } catch (err: any) {
@@ -382,47 +399,139 @@ export class TranscriptionService {
   }
 
   /**
-   * Non-destructive, language-preserving text formatting
-   * NEVER removes repeated words like 'धीरे धीरे' or 'run run'!
+   * Fast AI auto-structuring using Groq's high-speed Llama 3.1 8B (<120ms latency)
+   * Automatically formats lists into bullets/numbers and rambles into clean paragraphs.
    */
-  public organizeTranscript(
+  private async autoStructureWithGroq(rawText: string, apiKey: string): Promise<string | null> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 1300); // 1.3s max timeout for instant typing
+
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: 'llama-3.1-8b-instant',
+          messages: [
+            {
+              role: 'system',
+              content:
+                "You are Wispr Flow's intelligent dictation auto-formatter. Format the raw spoken audio transcript into clean, professional, readable text.\n" +
+                "Rules:\n" +
+                "1. Fix grammar, punctuation, and capitalization.\n" +
+                "2. Remove verbal filler words ('uh', 'um', 'you know', 'matlab', stutters, false starts).\n" +
+                "3. If the speaker dictated list items, sequential steps, or multiple distinct points, organize them with clean bullet points (•) or numbered lists (1., 2.).\n" +
+                "4. For long rambling speech, structure thoughts into natural, readable paragraphs.\n" +
+                "5. Keep the speaker's exact words, language (English, Hindi, or Hinglish), tone, and vocabulary intact. Do not summarize and do not translate.\n" +
+                "6. Output ONLY the finalized formatted text. Do NOT add any preamble, quotes, explanations, or conversational commentary.",
+            },
+            {
+              role: 'user',
+              content: rawText,
+            },
+          ],
+          temperature: 0.1,
+          max_tokens: 1024,
+        }),
+      });
+
+      clearTimeout(timeout);
+
+      if (!res.ok) {
+        return null;
+      }
+
+      const data = (await res.json()) as any;
+      const content = data.choices?.[0]?.message?.content;
+      return content ? content.trim() : null;
+    } catch {
+      clearTimeout(timeout);
+      return null;
+    }
+  }
+
+  /**
+   * Non-destructive, language-preserving text formatting with intelligent structuring
+   * Preserves natural Hindi/Hinglish phrasing and auto-formats long speech into clean lists and paragraphs.
+   */
+  public async organizeTranscript(
     raw: string,
     prefs: AppPreferences,
     dictionary: DictionaryItem[]
-  ): string {
+  ): Promise<string> {
     if (!raw || !raw.trim()) return '';
     let text = raw.trim();
 
-    // 1. Remove isolated vocal fillers without breaking words
-    text = text.replace(/\b(uh|um|umm|err|er|ahh|ah)\b[\s,]*/gi, '');
+    // 1. Remove isolated vocal fillers without breaking words (English & Hindi/Hinglish)
+    text = text.replace(/\b(uh|um|umm|err|er|ahh|ah|you know|sort of|kind of)\b[\s,]*/gi, '');
+    text = text.replace(/\b(मतलब|matlab|yaani|jaise ki|arrey|haan toh|achha toh|toh basically)\b[\s,]*/gi, '');
 
-    // 2. Clean spacing around punctuation: "word , word . " -> "word, word."
+    // 2. Remove accidental word stutters (e.g. "I I think" -> "I think")
+    text = text.replace(/\b(\w+)\s+\1\b/gi, '$1');
+
+    // 3. Clean spacing around punctuation: "word , word . " -> "word, word."
     text = text.replace(/\s+([,.!?;:])/g, '$1');
     text = text.replace(/([,.!?;:])(?=[^\s\d])/g, '$1 ');
 
-    // 3. Clean duplicate punctuation (e.g. ",," -> ",")
+    // 4. Clean duplicate punctuation (e.g. ",," -> ",")
     text = text.replace(/,{2,}/g, ',');
     text = text.replace(/\.{3,}/g, '...');
 
-    // 4. Ensure first character is capitalized
+    // 5. Ensure first character is capitalized
     if (text.length > 0) {
       text = text.charAt(0).toUpperCase() + text.slice(1);
     }
 
-    // 5. Hinglish Script Handling:
-    // If Hinglish mode is active and Roman script is preferred, phonetically transliterate Devanagari to Roman
+    // 6. Hinglish Script Handling
     if (prefs.hinglishMode && !prefs.translateMode && prefs.hinglishScript !== 'devanagari') {
       if (isDevanagari(text)) {
         text = devanagariToHinglish(text);
       }
     }
 
-    // 6. Custom Dictionary & Snippet Replacements
+    // 7. Custom Dictionary & Snippet Replacements
     for (const item of dictionary) {
       if (item.replacement) {
         const regex = new RegExp(`\\b${item.phrase}\\b`, 'gi');
         text = text.replace(regex, item.replacement);
       }
+    }
+
+    // 8. Auto-Structuring: Detect lists and long speech patterns
+    const hasPointMarkers = /\b(?:point\s*\d+|number\s*\d+|step\s*\d+|firstly|secondly|thirdly)\b/i.test(text);
+    const wordCount = text.split(/\s+/).length;
+
+    // Fast AI Auto-Structuring via Groq LLM if Groq key is present and smartStructuring is enabled
+    const groqKey = prefs.groqApiKey || process.env.GROQ_API_KEY;
+    if (prefs.smartStructuring !== false && groqKey && (wordCount >= 20 || hasPointMarkers)) {
+      try {
+        const structured = await this.autoStructureWithGroq(text, groqKey);
+        if (structured && structured.length >= 5) {
+          return structured.trim();
+        }
+      } catch (e) {
+        console.warn('[TranscriptionService] Groq fast structuring fallback to heuristics:', e);
+      }
+    }
+
+    // Fallback Heuristic Structuring (0ms, offline reliable):
+    // 8a. Convert "Point 1 / Point 2" or "Number 1 / Number 2" to clean bullet/numbered lists
+    text = text.replace(/(?:^|\.\s+|\s+)(?:point|number)\s*(\d+)[:.]?\s*/gi, '\n$1. ');
+    text = text.replace(/(?:^|\.\s+|\s+)(?:firstly|first)\s*[:,]?\s*/gi, '\n• First, ');
+    text = text.replace(/(?:^|\.\s+|\s+)(?:secondly|second)\s*[:,]?\s*/gi, '\n• Second, ');
+    text = text.replace(/(?:^|\.\s+|\s+)(?:thirdly|third)\s*[:,]?\s*/gi, '\n• Third, ');
+    text = text.replace(/(?:^|\.\s+|\s+)(?:finally)\s*[:,]?\s*/gi, '\n• Finally, ');
+
+    // 8b. Natural paragraph breaks for long continuous speech (> 35 words)
+    if (wordCount > 35) {
+      text = text.replace(
+        /(?<=[.!?])\s+(?=(?:Also|Additionally|Furthermore|Moreover|However|On the other hand|In conclusion|Finally|Aur haan|Dusri baat)\b)/gi,
+        '\n\n'
+      );
     }
 
     return text.trim();
@@ -446,14 +555,14 @@ export class TranscriptionService {
     const isDebug = DebugService.isDebugEnabled(prefs.debugMode);
     const audioLengthMs = Math.round(((audioBuffer.length - 44) / 32000) * 1000);
 
-    // Initial prompt hint for language accuracy
+    // Initial prompt hint for language accuracy and punctuation (concise keywords only, NEVER full sentences!)
     let promptHint: string | undefined = undefined;
     if (prefs.language === 'hi') {
-      promptHint = 'यह एक हिंदी वॉइस डिक्टेशन है। कृपया सही शब्दों में लिखें।';
+      promptHint = 'हिंदी, शुद्ध वर्तनी, विराम चिह्न।';
     } else if (prefs.language === 'hinglish' || prefs.hinglishMode) {
-      promptHint = 'Yeh Hinglish conversation hai with mixed Hindi and English words like kya, kyu, kaise, please, meeting, call, project.';
+      promptHint = 'Hinglish, Hindi-English, clean punctuation.';
     } else {
-      promptHint = 'नमस्ते, Hello, this is a clear dictation in Hindi and English.';
+      promptHint = undefined;
     }
 
     // Create debug session if debugMode is active
@@ -471,12 +580,12 @@ export class TranscriptionService {
         bitDepth: 16,
         noiseReduction: prefs.noiseReduction || 'normal',
         hinglishMode: Boolean(prefs.hinglishMode),
-        provider: prefs.apiProvider || 'huggingface',
+        provider: prefs.apiProvider || 'groq',
       });
     }
 
-    // Split audio at silence boundaries if longer than 25-30s
-    const chunks = this.splitWavAtSilence(audioBuffer, 22, 0.5);
+    // Process audio: Never slice short/medium audio (< 75 seconds) to avoid losing words!
+    const chunks = this.splitWavAtSilence(audioBuffer, 60, 0.5);
     console.log(`[TranscriptionService] Transcribing ${audioLengthMs}ms audio (${chunks.length} chunk(s))...`);
 
     const chunkResults: string[] = [];
@@ -493,7 +602,7 @@ export class TranscriptionService {
     }
 
     const rawTranscript = this.mergeChunkTranscripts(chunkResults);
-    const finalTranscript = this.organizeTranscript(rawTranscript, prefs, dictionary);
+    const finalTranscript = await this.organizeTranscript(rawTranscript, prefs, dictionary);
     const latencyMs = Date.now() - t0;
 
     console.log(`[TranscriptionService] Done in ${latencyMs}ms via ${lastProvider}: "${finalTranscript}"`);
@@ -516,12 +625,16 @@ export class TranscriptionService {
     audioBuffer: Buffer,
     apiKey: string,
     language?: string,
-    translate = false
+    translate = false,
+    prompt?: string
   ): Promise<string> {
     const formData = new FormData();
     const blob = new Blob([new Uint8Array(audioBuffer)], { type: 'audio/wav' });
     formData.append('file', blob, 'audio.wav');
     formData.append('model', 'whisper-1');
+    if (prompt) {
+      formData.append('prompt', prompt);
+    }
     if (!translate && language && language !== 'auto' && language !== 'hinglish') {
       formData.append('language', language);
     }
@@ -547,12 +660,16 @@ export class TranscriptionService {
     audioBuffer: Buffer,
     apiKey: string,
     language?: string,
-    translate = false
+    translate = false,
+    prompt?: string
   ): Promise<string> {
     const formData = new FormData();
     const blob = new Blob([new Uint8Array(audioBuffer)], { type: 'audio/wav' });
     formData.append('file', blob, 'audio.wav');
     formData.append('model', 'whisper-large-v3-turbo');
+    if (prompt) {
+      formData.append('prompt', prompt);
+    }
     if (!translate && language && language !== 'auto' && language !== 'hinglish') {
       formData.append('language', language);
     }
@@ -574,27 +691,87 @@ export class TranscriptionService {
     return data.text || '';
   }
 
-  public async testProviderConnection(prefs: AppPreferences): Promise<{ success: boolean; message: string }> {
-    if (this.localWhisper.getIsReady()) {
-      return {
-        success: true,
-        message: 'Local CUDA GPU Whisper is active & ready (RTX 2050, 0.3s ultra-fast).',
-      };
+  /**
+   * Actively validates credentials and network latency for the selected provider
+   */
+  public async testProviderConnection(prefs: AppPreferences): Promise<{ success: boolean; message: string; latencyMs?: number }> {
+    const t0 = Date.now();
+    const provider = prefs.apiProvider || 'groq';
+
+    if (provider === 'groq') {
+      const key = prefs.groqApiKey || process.env.GROQ_API_KEY;
+      if (!key) {
+        return { success: false, message: 'Please enter a Groq API Key.' };
+      }
+      try {
+        const res = await fetch('https://api.groq.com/openai/v1/models', {
+          headers: { Authorization: `Bearer ${key}` },
+        });
+        const latency = Date.now() - t0;
+        if (res.ok) {
+          return { success: true, message: `Groq connected successfully (${latency}ms latency). Ready for ultra-fast dictation!`, latencyMs: latency };
+        }
+        const err = await res.text();
+        return { success: false, message: `Groq error (${res.status}): ${err}` };
+      } catch (e: any) {
+        return { success: false, message: `Network error reaching Groq: ${e.message}` };
+      }
     }
-    if (prefs.hfToken) {
-      return {
-        success: true,
-        message: 'Hugging Face API configured and ready.',
-      };
+
+    if (provider === 'openai') {
+      const key = prefs.openaiApiKey || process.env.OPENAI_API_KEY;
+      if (!key) {
+        return { success: false, message: 'Please enter an OpenAI API Key.' };
+      }
+      try {
+        const res = await fetch('https://api.openai.com/v1/models', {
+          headers: { Authorization: `Bearer ${key}` },
+        });
+        const latency = Date.now() - t0;
+        if (res.ok) {
+          return { success: true, message: `OpenAI connected successfully (${latency}ms latency).`, latencyMs: latency };
+        }
+        const err = await res.text();
+        return { success: false, message: `OpenAI error (${res.status}): ${err}` };
+      } catch (e: any) {
+        return { success: false, message: `Network error reaching OpenAI: ${e.message}` };
+      }
     }
-    return { success: true, message: 'Provider ready.' };
+
+    if (provider === 'local') {
+      if (this.localWhisper.getIsReady()) {
+        return { success: true, message: 'Local GPU Whisper daemon is active & ready.' };
+      }
+      return { success: false, message: 'Local Whisper daemon is not active. Make sure Python/CUDA is running or switch to Groq.' };
+    }
+
+    if (provider === 'huggingface') {
+      const token = prefs.hfToken || process.env.HF_TOKEN;
+      if (!token) {
+        return { success: false, message: 'Please enter a Hugging Face API Token.' };
+      }
+      try {
+        const res = await fetch('https://huggingface.co/api/whoami-v2', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const latency = Date.now() - t0;
+        if (res.ok) {
+          return { success: true, message: `Hugging Face token verified (${latency}ms latency).`, latencyMs: latency };
+        }
+        return { success: false, message: `Invalid Hugging Face token (${res.status}).` };
+      } catch (e: any) {
+        return { success: false, message: `Network error reaching Hugging Face: ${e.message}` };
+      }
+    }
+
+    return { success: true, message: 'Ready.' };
   }
 
   public async polishText(
     text: string,
     style: 'formal' | 'casual' | 'bullet' | 'concise' | 'grammar',
-    customPrompt?: string,
-    prefs?: AppPreferences
+    _customPrompt?: string,
+    _prefs?: AppPreferences
   ): Promise<string> {
     switch (style) {
       case 'formal':

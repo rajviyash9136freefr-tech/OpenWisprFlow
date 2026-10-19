@@ -25,6 +25,8 @@ export interface AppPreferences {
   // Custom Flow Bar Position
   customWindowPosition?: { x: number; y: number } | null;
   userName?: string;
+  hasCompletedOnboarding?: boolean;
+  smartStructuring?: boolean;
 }
 
 export interface HistoryItem {
